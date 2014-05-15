@@ -1,0 +1,495 @@
+#! /bin/bash
+
+Version=1.7
+
+snap_host=svn.hrdag.org
+
+source snaplib.sh || exit 1
+
+Usage="
+Usage: $our_name [options] action [args]
+   Current actions are:
+      pull [snapshot]: pull project snapshot (defaults to HEAD)
+      push [-m msg|-F msg-file] [tag]: push workspace, then optionally tag
+      stat [diff-opts]: show status of added/deleted/modified files
+      tag  [snapshot] tag-name: tag snapshot (defaults to HEAD)
+      tags [project]: show all tags , defaults to workspace project
+      log  [project]: show all snaps, defaults to workspace project
+      du   [project]: du the project, defaults to workspace project
+      df [-i]: show free space (or inodes if -i) in repository
+   Common options:
+	-s server: specify repository server (default $snap_host)
+	-V: show current version
+
+	-d: Debug shell script (don't run commands, just show them)
+	-t: Trace shell script (show commands as they execute)"
+
+Run= Trace= debug_opt= trace_opt=
+while getopts "s:V dthk" arg
+    do  case $arg in
+	   ( s ) snap_host=$OPTARG ;;
+	   ( V ) error "version $Version" ;;
+
+	   ( d ) Run=echo       debug_opt=-d ;; # put $Run before 'active' cmds
+	   ( t ) Trace="set -x" trace_opt=-t ;;
+	   (h|k) print_or_egrep_Usage_then_exit "$@" ;;
+	   ( * ) error "$Usage" ;;
+	esac
+done
+let OPTIND=$OPTIND-1
+shift $OPTIND
+unset arg
+
+[[ $# != 0 ]] || error "$Usage"
+
+[[ -n $Trace && -n $Run ]] && Run=:
+
+# ----------------------------------------------------------------------------
+# support functions
+# ----------------------------------------------------------------------------
+
+ project=
+local_rev=
+
+cd___source_config___set_project__local_rev() {
+
+	local cwd=$PWD
+	cd_ $(/bin/pwd)			# avoid symlink weirdness
+	until [[ -d .git ]]
+	   do	cd_ ..
+		[[ $PWD != / ]] && continue
+		cd_ $cwd
+		return 1
+	done
+
+	convert_snap_metadata
+
+	local dir
+	for dir in $snappable_subdirs
+	    do	grep --quiet --no-messages "^$dir/$" .gitignore && continue
+		echo $dir/ >> .gitignore
+	done
+
+	run_cmd mkdir -p .snap
+	project=$(basename $PWD)
+	[[ -s .snap/revision ]] && local_rev=$(< .snap/revision)
+
+	[[ ! -s .snap/config ]] || source .snap/config ||
+	 error ".snap/config ended with non-0 status"
+	readonly project local_rev snap_host
+
+	return 0
+}
+
+# ----------------------------------------------------------------------------
+
+is_workspace_modified() {
+
+	[[ -s .snap/files-repo.sha1 ]] || return 0
+	write_metadata
+	# are the sha1 checksums different?
+	(( $(sed 's/ .*//' .snap/files-{repo,local}.sha1 |
+	       uniq | wc -l) != 1 ))
+}
+
+# ----------------------------------------------------------------------------
+
+run_ssh_cmd() {
+
+	local cmd="ssh $snap_host snap"
+	$Trace
+	$Run $cmd "$@" || error "$cmd $* => $?"
+	set +x
+}
+
+# -------------------------------------------------------
+
+# the 'q' is for quiet, this command silently ignores errors
+ssh_snap_q() {
+
+	$Trace
+	ssh $snap_host snap "$@" 2>/dev/null
+	set +x
+}
+
+# ----------------------------------------------------------------------------
+
+run_rsync_cmd() {
+
+	$Trace
+	$Run rsync $rsync_opts --out-format='%n%L (%bB -> %lB)' "$@" ||
+	   error "rsync $* => $?"
+	set +x
+}
+
+# ----------------------------------------------------------------------------
+
+set_snappable_dirs() {
+
+	set -- *
+	[[ "$*" == '*' ]] && return 1
+
+	local dir find_opts=
+	for dir in $snappable_subdirs
+	    do	find_opts="$find_opts -name $dir -o"
+	done
+	find_opts=${find_opts% -o}
+	snappable_dirs=$(run_cmd find $* -type d \( $find_opts \) | sort)
+	[[ $snappable_dirs ]]
+}
+
+# ----------------------------------------------------------------------------
+
+reversed_lines() {
+
+	if have_cmd tac			# 'tac' is 'cat' spelled backwards
+	   then tac     "$@"		# the GNU way
+	   else tail -r "$@"		# the Darwin/BSD way
+	fi
+}
+
+# ----------------------------------------------------------------------------
+# snap actions
+# ----------------------------------------------------------------------------
+
+files_to_paths() {
+	local metadata_file=${1-}	# written by write_metadata
+
+	# handle SPACEs in filenames
+	sed -n '/ -> /s/ -> .*//p; / UTC$/s/  .*//p' $metadata_file
+}
+
+# ---------------------------------
+
+modified_paths() {
+	local src=${1:-.snap/files-repo} dst=${2:-.snap/files-local}
+
+	write_metadata
+	diff --unified=0 $src $dst | sed -n '/^+[^+]/s/^.//p' | files_to_paths
+}
+
+# ---------------------------------
+
+deleted_paths() {
+	local old_metadata_file=$1 new_metadata_file=$2
+
+	local old_paths=$tmpdir/${our_name%% *}-old.$$
+	local new_paths=$tmpdir/${our_name%% *}-new.$$
+	files_to_paths $old_metadata_file > $old_paths || error $old_paths
+	files_to_paths $new_metadata_file > $new_paths || error $new_paths
+	run_cmd comm -23 $old_paths $new_paths | uniq
+	run_cmd rm $old_paths $new_paths
+}
+
+# ---------------------------------
+
+snap_pull() {
+	if [[ ${1-} == -i ]]
+	   then shift
+		local is_internal=$true
+	   else local is_internal=$false
+	fi
+	local _project=${1:-$project}
+	[[ $_project ]] || error "need to specify a project or be in workspace"
+	if [[ $_project == */* ]]
+	   then # if want archived snapshot, can pull into archived git project
+		# [[ ! $project ]] || error "can only pull HEAD into workspace"
+		local snapshot=$_project
+	   else local snapshot=$_project/HEAD
+	fi
+	_project=${_project%/*}
+	[[ ${1-} && $(basename $PWD) != $_project ]] &&
+	   run_cmd mkdir -p $_project
+
+	local old_repo_files=$tmp_1 our_modified=$tmp_2 HEAD_modified=$tmp_3
+	local deleted_paths=$tmp_4 spurious_paths=$tmp_5
+	if [[ -s .snap/files-repo && ! $is_internal ]]
+	   then run_cmd cp .snap/files-repo $old_repo_files
+	   else run_cmd cp /dev/null        $old_repo_files
+	fi
+	run_cmd cp /dev/null $our_modified
+
+	local dst=.  _rsync_opts=
+	if [[ $is_internal ]]
+	   then true
+	elif [[ ! $project ]]
+	   then dst=$_project
+		run_cmd mkdir -p $dst/.git # so looks like a workspace
+	elif set_snappable_dirs
+	   then modified_paths > $our_modified
+		[[ -s $our_modified ]] &&
+		   # don't replace locally-modified files (we'll report later)
+		   _rsync_opts=--exclude-from=$our_modified
+	fi
+
+	run_rsync_cmd $_rsync_opts $snap_host:$snapshot/ $dst/
+	cd_ $dst
+	[[ -s .snap/files-pre-push ]] ||
+	   run_cmd cp .snap/files-repo .snap/files-pre-push
+
+	[[ $is_internal || ! -s $old_repo_files ]] &&
+	   rm -f $tmp_files && return 0
+
+	# let user delete local files that were deleted from latest snapshot(s)
+	deleted_paths $old_repo_files .snap/files-repo > $deleted_paths
+	write_metadata
+	files_to_paths .snap/files-local | # ignore files we don't have ...
+	  comm -12 $deleted_paths - > $spurious_paths
+	if [[ -s $spurious_paths ]]
+	   then set -- $(< $spurious_paths)
+		local ls_files="\n$(ls -C   $* | sed 's/^/  /')"
+		local ll_files="\n$(ls -ldF $* | sed 's/^/  /')"
+		warn "the following files were deleted from the repo:
+			$ll_files
+			$ls_files
+
+  You'll be asked if you want to delete them locally (you won't be asked again,
+  if you decline or hit CTRL-c); answer 'y', or 'n' or ENTER, for each file..."
+		rm -i $(< $spurious_paths)
+
+		# for files that were deleted, delete any empty parent dirs
+		local file
+		while read file
+		    do	[[ -e "$file" ]] || echo "$file"
+		done < $spurious_paths > $deleted_paths
+		set -- $(sed 's@/.*$@@'  $deleted_paths | uniq)
+		[[ $# != 0 ]] &&
+		find $* -depth -type d -print0 | xargs -0 rmdir >& /dev/null
+	fi
+
+	[[ ! -s $our_modified ]] && rm -f $tmp_files && return 0
+	# report (once) any "conflicts": files modified by us and someone else
+	modified_paths $old_repo_files .snap/files-repo > $HEAD_modified
+	# find files modified by both us and HEAD
+	local conflict_files=$(comm -12 $our_modified $HEAD_modified)
+	rm -f $tmp_files
+	[[ $conflict_files ]] || return 0
+
+	warn "since your previous pull, both you and someone else modified these file(s):"
+	echo "$conflict_files" | sed 's/^/  /'
+	warn "this pull did _not_ replace your local version(s) of these files.
+  (If you want to see the repo's version, temporarily rename yours then pull.)
+  You won't see this warning again: you must consider these conflicts now."
+	return 0
+}
+
+# ----------------------------------------------------------------------------
+
+comment=
+
+set_comment() {
+	if [[ ${1-} != -* ]]
+	   then [[ ${1-} != *' '* ]] ||
+		   error "argument contains spaces; did you forget -m ?"
+		return 1
+	fi
+	if   [[ $1 == -m ]]
+	   then comment=${2-}
+		[[ $comment ]] || error "-m needs a string"
+	elif [[ $1 == -F ]]
+	   then local file=${2-}
+		[[ $file && -s $file ]] || error "-F needs a file"
+		comment=$(< $file)
+	   else error "$1 is unrecognized option"
+	fi
+	# each log record is a single line
+	comment=$(echo -n "$comment" | tr '\n' ' ')
+}
+
+# --------------------------------------------
+
+update_log() {
+
+	local   _date=$(date -u '+%F %T UTC (%a)')
+	local  record="$local_rev | $LOGNAME | $_date | ${comment:---}"
+	echo "$record" >> .snap/push.log &&
+	$Run rsync $rsync_opts -q .snap/push.log $snap_host:$project/HEAD/.snap/
+}
+
+# --------------------------------------------
+
+is_head() {
+
+	local head_rev=$(ssh_snap_q cat $project/HEAD/.snap/revision)
+	[[ ! $head_rev && $local_rev ]] && error "missing $project/HEAD ?"
+	[[ ! $head_rev || $local_rev == $head_rev ]]
+}
+
+# --------------------------------------------
+
+file_contains_restartable_rsync_error() {
+	local file=$1
+
+	# OS X rsync sometimes exits after 'Write failed: Broken pipe'
+	# (which can occur on an ssh connection, even with Linux); the broken
+	# pipe might be related to our svn server's CentOS-6 kernel (an
+	# iptables ACK rule was added, but that didn't help).
+	# The 'Broken pipe' error happens with OS X's rsync-2.6.9 (protocol 29)
+	# and OS X's brew's rsync-3.1.0 (protocol 31); the svn server runs
+	# rsync-3.0.6 (protocol 30).
+	# we've generalized this check to any unexpected connection close.
+	fgrep --quiet 'rsync: connection unexpectedly closed' $file
+	return $?
+}
+
+# --------------------------------------------
+
+snap_push() {
+	set_comment "$@" && shift 2
+	[[ $# == [01] ]] || error "[-m msg|-F msg-file] [tag]"
+	local tag=${1-}
+
+	[[ $project ]] || error "can only 'push' when inside a project"
+
+	# is_workspace_modified runs write_metadata, writes .snap/files-local
+	if ! is_workspace_modified && [[ $(ssh_snap_q ls $project/HEAD) ]]
+	   then echo "no local changes"
+		return 1
+	fi
+
+	is_head || error "your workspace is not HEAD, must do a 'pull' first"
+
+	set_snappable_dirs || error "no directories to push"
+	# we use group perms for authorization: make files group-accessible
+	run_cmd chmod -R ug+rwX $snappable_dirs
+
+	local paths_to_delete=.snap/paths-to-delete # snapserv uses this file
+	if [[ -s .snap/files-pre-push ]]
+	   then local before_paths=$tmp_1
+		# I'm not sure we need both these files
+		files_to_paths .snap/files-{pre-push,repo} |
+		   sort -u > $before_paths
+		files_to_paths .snap/files-local |
+		   comm -23  $before_paths -
+		run_cmd rm   $before_paths
+	   else true
+	fi >  $paths_to_delete
+	[[ -s $paths_to_delete ]] || paths_to_delete=
+
+	local rsync_output=$tmp_1
+	while true
+	   do	# pipeline runs rsync in separate process: ok if exits on error
+		run_rsync_cmd --delete --relative \
+				  $paths_to_delete $snappable_dirs \
+				  $snap_host:$project/ 2>&1 | tee $rsync_output
+		local status=${PIPESTATUS[0]} # rsync's exit status
+		[[ $status == 0 ]] && break
+		file_contains_restartable_rsync_error $rsync_output || exit 1
+		warn "rsync exited with $status, continuing where left off"
+	done
+	rm $rsync_output
+	run_cmd cp .snap/files-local .snap/files-pre-push
+
+	snap_pull -i 2>&1 |		# grab the new snapshot's .snap/* files
+	   egrep -v '^\.snap/| |^$'	# but don't show .snap/* (or -v msgs)
+	local status=${PIPESTATUS[0]}	# rsync's exit status
+	[[ $status == 0 ]] || error "couldn't pull snap's metadata: .snap/*"
+
+	local new_rev=$(< .snap/revision)
+	warn "successfully pushed $new_rev"
+
+	update_log			# run _after_ snap_pull, so latest log
+
+	[[ $tag ]] && snap_tag $new_rev "$tag" # ... similarly
+	return 0
+}
+
+# ----------------------------------------------------------------------------
+
+snap_tag() {
+	[[ $# == [12] ]] || error "[snapshot] tag-name"
+	if [[ $# == 2 ]]
+	   then local target=$1		tag_name=$2
+	   else local target=$local_rev	tag_name=$1
+		is_workspace_modified &&
+		error "workspace pulled from $local_rev, but has been modified"
+	fi
+
+	[[ $target != */* && $project ]] && target=$project/$target
+
+	# these tests are duplicated in snap_cmd in snapserv
+	[[ $target == */s[1-9]* && $target != */*/* ]] ||
+	    error "illegal snapshot target: $target"
+	case $tag_name in
+	   ( HEAD | HEAD.* | s[1-9]* ) error "tag-name $tag_name is reserved";;
+	   (     [^a-zA-Z0-9]* ) error "start tag-name with alphanumeric" ;;
+	   ( *[^-._a-zA-Z0-9]* ) error "illegal charater in tag-name" ;;
+	esac
+
+	run_ssh_cmd  ln -s $target $tag_name
+	echo "$tag_name -> $target"
+}
+
+# ----------------------------------------------------------------------------
+
+snap_stat() {
+	[[ $project ]] || error "need to be in a data project"
+
+	write_metadata
+	diff --unified=0 "$@" .snap/files-repo .snap/files-local
+}
+
+# ----------------------------------------------------------------------------
+
+_snap_ls() {
+	local ls_opts=$1 egrep_opts=$2; shift 2
+	[[ $# == 1 || $project ]] || error "not in workspace, specify project"
+	local _project=${1:-$project}
+
+	run_ssh_cmd ls $ls_opts "$_project/*" |
+	  egrep $egrep_opts ' [A-Z]{2}[^/ ]*/s[1-9][0-9]*$'
+}
+
+# ------------------------------------
+
+snap_tags() { _snap_ls -ld  -v "$@"; }
+snap_log_() { _snap_ls -ldt '' "$@"; }	# old way
+snap_log () {				# new way
+	local _project=${1:-$project}
+	[[ $_project ]] || error "need to specify a project or be in workspace"
+
+	[[ $_project == $project ]] || { snap_log_ "$@"; return; }
+
+	if ! is_head
+	   then $Run rsync $rsync_opts --quiet \
+			   $snap_host:$_project/HEAD/.snap/push.log .snap/
+		warn "last pull was $(< .snap/revision), you're not up-to-date"
+	fi
+
+	reversed_lines .snap/push.log	# show newest log records first
+}
+
+# ----------------------------------------------------------------------------
+
+snap_du() {
+	[[ ${1-} == -* ]] && { local du_opts=$1; shift; } || local du_opts=
+	local _project=${1:-$project}
+
+	# empty Linux directories are 4 KB, and GNU ls displays as 4.0K
+	ssh_snap_q du -h -s $du_opts "${_project:-*}" | egrep -v '^4.0K'
+}
+
+# ----------------------------------------------------------------------------
+# main
+# ----------------------------------------------------------------------------
+
+readonly action=$1; shift
+readonly our_name="$our_name $action"	# for 'error' function
+
+cd___source_config___set_project__local_rev ||
+case $action in
+   ( log | pull | tags | df | du | ls ) ;; # these accept project as argument
+   ( * ) error "couldn't find root of git workspace" ;;
+esac
+
+case $action in
+   ( pull ) snap_pull "$@" ;;
+   ( push ) snap_push "$@" ;;
+   ( stat*) snap_stat "$@" ;;
+   ( tag  ) snap_tag  "$@" ;;
+   ( tags ) snap_tags "$@" ;;
+   ( log  ) snap_log  "$@" ;;
+   ( du   ) snap_du   "$@" ;;
+   ( df | ls | cat | head | tail | rm ) run_ssh_cmd $action "$@" ;;
+   ( * ) error "action '$action' is not supported" ;;
+esac

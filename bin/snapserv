@@ -1,0 +1,155 @@
+#! /bin/bash
+
+PATH=$PATH:/usr/local/bin:/usr/local/bookshare/bin # snaplib.sh, lockpid
+source snaplib.sh || exit 1
+
+readonly snapserv_root=/var/local/vcs/snap
+readonly log=$snapserv_root/.$our_name.log
+if [[ ${SSH_CLIENT-} ]]
+   then readonly who_am_i=$LOGNAME@${SSH_CLIENT%% *}
+   else readonly who_am_i=$LOGNAME
+fi
+
+log() { [[ -w $log ]] && echo "$date $who_am_i: $*" >> $log; }
+
+[[ $1 == -d ]] && { Run=echo; shift; }
+if [[ $1 == -c ]]
+   then shift
+	cd_ $snapserv_root
+	for repo in ${*:-*}
+	    do	cd_ $snapserv_root/$repo
+		for snapshot in s[1-9]*
+		    do	dir=$snapserv_root/$repo/$snapshot
+			[[ -d $dir ]] || continue
+			cd_   $dir
+			convert_snap_metadata && pwd
+		done
+	done
+	exit
+fi
+
+# echo "$@" | write scott pts/0; exit 1
+log "+ $SSH_ORIGINAL_COMMAND"
+
+case $SSH_ORIGINAL_COMMAND in
+  ( *[^-=._a-zA-Z0-9/\ *]* ) # optional, for globbing: {,} [^\]
+		error    "illegal character(s): $SSH_ORIGINAL_COMMAND" ;;
+  ( *..* )      error    "can't use .. in path: $SSH_ORIGINAL_COMMAND" ;;
+  ( *[\	\ ]/* ) error "can't use absolute path: $SSH_ORIGINAL_COMMAND" ;;
+  # the next two patterns are duplicated in vcs-serve
+  ( 'snap '*		) is_rsync=$false ;;
+  ( 'rsync --server '*	) is_rsync=$true  ;;
+  ( * ) error "this can only be called by 'vcs-serve' on behalf of 'snap'" ;;
+esac
+
+cd_ $snapserv_root
+
+rsync_cmd() {
+
+	data_dir=${SSH_ORIGINAL_COMMAND##* }
+	project=${data_dir%%/*}
+	[[ -d $project ]] || error "project '$project' doesn't exist"
+
+	if   [[ $SSH_ORIGINAL_COMMAND == *' --sender '* ]]
+	   then exec rsync --server --sender $rsync_server_opts . $data_dir
+		error "exec rsync => $?"
+	elif [[ $SSH_ORIGINAL_COMMAND == */HEAD/.snap/ ]] # writing push.log?
+	   then exec rsync --server $rsync_server_opts . $data_dir
+		error "exec rsync => $?"
+	fi
+
+	data_dir=${data_dir%/}
+	[[ $data_dir == $project ]] || error "you can only checkin a new HEAD"
+
+	cd_ $project
+
+	# if 'snap push' sees 'Write failed: Broken pipe', ssh & rsync are hung
+	for signal in HUP TERM KILL
+	    do	ps -fC rsync |  grep --quiet "^$LOGNAME\b" || break
+		killall --process-group --user $LOGNAME --signal $signal rsync
+		sleep 0.5
+	done
+	readonly lock=$PWD/.lock
+	lockpid $lock || error "can't get lock: $(ls -l $lock)"
+
+	# recover from a failed "atomic" opeation (see end of this function)
+	[[ ! -s HEAD && -s HEAD.old ]] && run_cmd mv HEAD.old HEAD
+	head=$(readlink HEAD)
+	if [[ ! $head ]]
+	   then new_head=s1
+	   else let new_head_num=${head#s}+1; new_head=s$new_head_num
+	fi
+	my_new_head=$new_head.$LOGNAME
+
+	rm -rf $new_head HEAD.*		# could have old, failed attempt
+	[[ $head && ! -d $my_new_head ]] &&
+	run_cmd cp --recursive --no-dereference --link $head $my_new_head
+	run_cmd mkdir -p $my_new_head	# needed for first push
+
+	cd_ $my_new_head
+	rm -f .snap/*[^g]		# keep push.log
+	run_cmd rsync --server $rsync_server_opts -R --delete . . # user's data
+	echo "$project/$new_head" > .snap/revision
+	if [[ -s .snap/paths-to-delete ]]
+	   then run_cmd xargs rm -f < .snap/paths-to-delete
+		run_cmd rm .snap/paths-to-delete
+		# delete empty directories
+		find * -depth -type d -print0 |
+		xargs --null --no-run-if-empty rmdir --ignore-fail-on-non-empty
+	fi
+	write_metadata
+	cd_ ..
+
+	run_cmd mv $my_new_head $new_head
+	run_cmd ln -s $new_head HEAD.new
+	trap '' 1 2 3 15		# don't die, need "atomic" operation
+	[[ -s HEAD ]] && run_cmd mv HEAD HEAD.old
+	if mv HEAD.new HEAD
+	   then rm -f  HEAD.old
+	   else mv HEAD.old HEAD
+	fi
+	# this doesn't need to be atomic, but it's convenient to do it here
+	rm -rf $new_head.*      # could have another user's old, failed attempt
+
+	rm $lock
+}
+
+snap_cmd() {
+
+	set -- $SSH_ORIGINAL_COMMAND
+	shift; action=$1; shift
+
+	case $action in
+	   ( df )
+		[[ $# == 0 || ( $# == 1 && $1 == -* ) ]] ||
+		   error "only one arg allowed, and it must be option(s)"
+		run_cmd $action -h "$@" . ;; # only operate on current dir
+	   ( ln )
+		[[ $# == 3 && $1 == -s ]] || error "can only create symlinks"
+		target=$2 tag_name=$3
+		[[ $target == */s[1-9]* && $target != */*/* &&
+		   $tag_name != */* ]] || error "ln -s CC/s## tag-name"
+		project=$(dirname $target) rev=$(basename $target)
+		[[ -d $project ]] || error "project $project doesn't exist"
+		cd    $project    || error "project $project is inaccessible"
+		[[ -d $rev ]] || error "snapshot $rev doesn't exist"
+		[[ ! -e  $tag_name ]] ||
+		   error "tag_name exists: $(ls -ld $tag_name)"
+		run_cmd ln -s $rev $tag_name ;;
+	   ( rm )
+		case $LOGNAME in
+		   ( pball | scottw ) ;;
+		   ( * ) error "you're not authorized to run '$action'" ;;
+		esac
+		[[ $action != rm || ${!#} == */?* ]] ||
+		   error "can't delete whole repos"
+		run_cmd $action "$@" ;;
+	   ( du | ls | cat | head | tail )
+		run_cmd $action "$@" ;;
+	esac
+}
+
+if [[ $is_rsync ]]
+   then rsync_cmd
+   else  snap_cmd
+fi
