@@ -1,6 +1,6 @@
 #! /bin/bash
 
-Version=1.7
+Version=1.8
 
 snap_host=svn.hrdag.org
 
@@ -70,7 +70,7 @@ cd___source_config___set_project__local_rev() {
 		echo $dir/ >> .gitignore
 	done
 
-	run_cmd mkdir -p .snap
+	run_cmd mkdir -p .snap		# needed for new project
 	project=$(basename $PWD)
 	[[ -s .snap/revision ]] && local_rev=$(< .snap/revision)
 
@@ -85,8 +85,8 @@ cd___source_config___set_project__local_rev() {
 
 is_workspace_modified() {
 
+	write_metadata			# caller expects this always happens
 	[[ -s .snap/files-repo.sha1 ]] || return 0
-	write_metadata
 	# are the sha1 checksums different?
 	(( $(sed 's/ .*//' .snap/files-{repo,local}.sha1 |
 	       uniq | wc -l) != 1 ))

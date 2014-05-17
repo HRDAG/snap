@@ -84,7 +84,7 @@ rsync_cmd() {
 	rm -rf $new_head HEAD.*		# could have old, failed attempt
 	[[ $head && ! -d $my_new_head ]] &&
 	run_cmd cp --recursive --no-dereference --link $head $my_new_head
-	run_cmd mkdir -p $my_new_head	# needed for first push
+	run_cmd mkdir -p $my_new_head/.snap # needed for first push
 
 	cd_ $my_new_head
 	rm -f .snap/*[^g]		# keep push.log

@@ -125,6 +125,7 @@ write_metadata() {
 	   then local metadata_file=.snap/files-repo
 	   else local metadata_file=.snap/files-local
 	fi
+	run_cmd mkdir -p .snap	  # might be fixing a half-initialized project
 
 	[[ ${Run-} ]] && metadata_file=/dev/tty
 	local dir fgrep_opts=
@@ -140,6 +141,10 @@ write_metadata() {
 	   then local sha_cmd=shasum
 	   else local sha_cmd=sha1sum
 	fi
-	[[ ${Run-} ]] ||
-	$sha_cmd $metadata_file > $metadata_file.sha1
+	if [[ ! ${Run-} ]]
+	   then cd_ .snap
+		metadata_file=${metadata_file#.snap/}
+		$sha_cmd $metadata_file > $metadata_file.sha1
+		cd_ ..
+	fi
 }
