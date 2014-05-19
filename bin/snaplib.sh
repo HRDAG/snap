@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
+Version=0.2.9
+
 set -u					# error if expand unset variable
 
 umask 02				# we use group perms
@@ -90,11 +92,13 @@ readonly old_name__new_name__pairs="
 .snap.local.sha1	.snap/files-local.sha1
 .snap.orig		.snap/files-repo
 .snap.sha1		.snap/files-repo.sha1
+
+.snap/config		.snap/config.sh
 "
 
 convert_snap_metadata() {
 	[[ $old_name__new_name__pairs ]] || return 1
-	[[ -f .snap.sha1 ]] || return 1	# already converted?
+	[[ -f .snap.sha1 || -f .snap/config ]] || return 1 # already converted?
 
 	[[ -f .snap ]] && run_cmd mv .snap .snap.orig
 	run_cmd mkdir -p .snap
@@ -112,6 +116,15 @@ convert_snap_metadata() {
 		   's@.snap.local$@files-local@; s@.snap$@files-repo@' $file
 	done
 	return 0
+}
+
+# ----------------------------------------------------------------------------
+
+source_config() {
+	local file=$1
+
+	[[ -s  $file ]] || return 1
+	source $file || error "$file ended with non-0 status"
 }
 
 # ----------------------------------------------------------------------------
@@ -138,6 +151,8 @@ compute_metadata() {
 	python $_tmp
 	rm $_tmp
 }
+
+# -------------------------------------------------------
 
 write_metadata() {
 

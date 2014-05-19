@@ -20,11 +20,43 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-PATH=$PATH:/usr/local/bin		# so can fine snaplib.sh & lockpid
+PATH=$PATH:/usr/local/bin		# so can find snaplib.sh & lockpid
 source snaplib.sh || exit 1
 
-readonly snapserv_root=/var/local/vcs/snap
-readonly log=$snapserv_root/.$our_name.log
+Usage="
+Usage: $our_name [options] [project(s)]
+   Options:
+	-c: convert metadata of projects (defaults to all projects)
+	-r dir: dir is Root directory of snap projects
+	-V: show current version
+
+	-d: Debug shell script (don't run commands, just show them)
+	-t: Trace shell script (show commands as they execute)"
+
+do_convert=$false
+snapserv_root=
+Run= Trace= debug_opt= trace_opt=
+while getopts "cr:V dthk" arg
+    do  case $arg in
+	   ( c ) do_convert=$true ;;
+	   ( r ) snapserv_root=$OPTARG ;;
+	   ( V ) error "version $Version" ;;
+
+	   ( d ) Run=echo       debug_opt=-d ;; # put $Run before 'active' cmds
+	   ( t ) Trace="set -x" trace_opt=-t ;;
+	   (h|k) print_or_egrep_Usage_then_exit "$@" ;;
+	   ( * ) error "$Usage" ;;
+	esac
+done
+let OPTIND=$OPTIND-1
+shift $OPTIND
+unset arg
+
+source_config /etc/$our_name.sh		# snapserv_root, rm_authorized_users
+[[ $snapserv_root ]] || error "need to set snapserv_root"
+
+readonly snapserv_root rm_authorized_users
+readonly log=${log:-$snapserv_root/.$our_name.log}
 if [[ ${SSH_CLIENT-} ]]
    then readonly who_am_i=$LOGNAME@${SSH_CLIENT%% *}
    else readonly who_am_i=$LOGNAME
@@ -36,10 +68,10 @@ log() { [[ -w $log ]] && echo "$date $who_am_i: $*" >> $log; }
 if [[ $1 == -c ]]
    then shift
 	cd_ $snapserv_root
-	for repo in ${*:-*}
-	    do	cd_ $snapserv_root/$repo
+	for project in ${*:-*}
+	    do	cd_ $snapserv_root/$project
 		for snapshot in s[1-9]*
-		    do	dir=$snapserv_root/$repo/$snapshot
+		    do	dir=$snapserv_root/$project/$snapshot
 			[[ -d $dir ]] || continue
 			cd_   $dir
 			convert_snap_metadata && pwd
@@ -157,12 +189,10 @@ snap_cmd() {
 		   error "tag_name exists: $(ls -ld $tag_name)"
 		run_cmd ln -s $rev $tag_name ;;
 	   ( rm )
-		case $LOGNAME in
-		   ( pball | scottw ) ;;
-		   ( * ) error "you're not authorized to run '$action'" ;;
-		esac
+		[[ " "${rm_authorized_users:-NoNe}" " == *" $LOGNAME "*  ]] ||
+		   error "you're not authorized to run '$action'"
 		[[ $action != rm || ${!#} == */?* ]] ||
-		   error "can't delete whole repos"
+		   error "can't delete whole projects"
 		run_cmd $action "$@" ;;
 	   ( du | ls | cat | head | tail )
 		run_cmd $action "$@" ;;

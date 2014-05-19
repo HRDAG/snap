@@ -18,9 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=1.8
-
-snap_host=svn.hrdag.org			# can over-ride in .snap/config
+snap_host=svn.hrdag.org	  # see also .snap/config.sh, ~/.snap.sh, /etc/snap.sh
 
 source snaplib.sh || exit 1
 
@@ -71,6 +69,9 @@ local_rev=
 
 cd___source_config___set_project__local_rev() {
 
+	source_config /etc/snap.sh
+	source_config ~/.snap.sh
+
 	local cwd=$PWD
 	cd_ $(/bin/pwd)			# avoid symlink weirdness
 	until [[ -d .git ]]
@@ -92,8 +93,7 @@ cd___source_config___set_project__local_rev() {
 	project=$(basename $PWD)
 	[[ -s .snap/revision ]] && local_rev=$(< .snap/revision)
 
-	[[ ! -s .snap/config ]] || source .snap/config ||
-	 error ".snap/config ended with non-0 status"
+	source_config .snap/config.sh
 	readonly project local_rev snap_host
 
 	return 0
@@ -496,7 +496,8 @@ readonly our_name="$our_name $action"	# for 'error' function
 
 cd___source_config___set_project__local_rev ||
 case $action in
-   ( log | pull | tags | df | du | ls ) ;; # these accept project as argument
+   ( pull | tags | log | du | df | ls | cat | head | tail | rm )
+	;;				# these accept project as argument
    ( * ) error "couldn't find root of git workspace" ;;
 esac
 
@@ -508,6 +509,8 @@ case $action in
    ( tags ) snap_tags "$@" ;;
    ( log  ) snap_log  "$@" ;;
    ( du   ) snap_du   "$@" ;;
-   ( df | ls | cat | head | tail | rm ) run_ssh_cmd $action "$@" ;;
+   ( df | ls | cat | head | tail | rm )
+	[[ $action == ls && $# == 0 ]] && set -- -CF
+	run_ssh_cmd $action "$@" ;;
    ( * ) error "action '$action' is not supported" ;;
 esac
