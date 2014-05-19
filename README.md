@@ -1,4 +1,6 @@
-# snap
+# Snap
+
+Copyright (c) Human Rights Data Analysis Group, 2014
 
 as of svn r4129.
 

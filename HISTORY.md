@@ -1,3 +1,7 @@
+# Snap
+
+v0.2.9 was released and tagged Mon 19 May 2014. This is pre-alpha, nearly ready for alpha release to team. All development to this point done by Scott Weikart; original specs by Patrick Ball.
+
 This is the svn history before snap was moved from svn to github
 ================================================================
 
