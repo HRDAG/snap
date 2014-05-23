@@ -261,8 +261,9 @@ snap_pull() {
 			$ll_files
 			$ls_files
 
-  You'll be asked if you want to delete them locally (you won't be asked again,
-  if you decline or hit CTRL-c); answer 'y', or 'n' or ENTER, for each file..."
+  You'll be asked if you want them deleted locally (you won't be asked again,
+  if you decline or hit CTRL-c, which will cause a later 'snap push' to restore
+  the files on the repo); for each file, answer 'y', else 'n' or ENTER ..."
 		rm -i $(< $spurious_paths)
 
 		# for files that were deleted, delete any empty parent dirs
