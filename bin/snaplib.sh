@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.9
+Version=0.2.10
 
 set -u					# error if expand unset variable
 
@@ -112,7 +112,7 @@ convert_snap_metadata() {
 	local file
 	for file in .snap/*.sha1
 	    do	[[ -s $file ]] || continue
-		run_cmd sed -i \
+		run_cmd sed -i~ \
 		   's@.snap.local$@files-local@; s@.snap$@files-repo@' $file
 	done
 	return 0
