@@ -13,6 +13,9 @@ project. Git is bad at keeping data files for the following reasons:
 
 * We don't need the version of every data file. Data files are produced by code, and the code should be able to reproduce the data files.
 
-* We need the data files for two reasons: (a) **short-term** we need to be able to transfer the files from one user to another for testing.
+* We need the data files for two reasons: (a) **short-term** we need to be able to transfer the files from one user to another for testing. (b) **long-term** we need the data files for archival purposes. Once a project has been left for a year or two, it can be enormously difficult to get the software running again. In order to know what happened in intermediate steps of the process, we cannot depend on re-running the code, so we need the data files.
 
-(b) **long-term** we need them for archival purposes. Once a project has been left for a year or two, it can be enormously difficult to get the software running again. In order to know what happened in intermediate steps of the process, we cannot depend on re-running the code, so we need the data files.
+
+## snap semantics
+
+* to check out a specific snap version (e.g., the SV tree at version 15) in a temp dir, say `cd /tmp; snap pull SV/s15`
