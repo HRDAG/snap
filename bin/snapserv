@@ -165,7 +165,6 @@ rsync_cmd() {
 	   then rm -f  HEAD.old
 	   else mv HEAD.old HEAD
 	fi
-	# this doesn't need to be atomic, but it's convenient to do it here
 	rm -rf $new_head.*      # could have another user's old, failed attempt
 
 	rm $lock

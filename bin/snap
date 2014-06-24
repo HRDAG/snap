@@ -240,6 +240,7 @@ snap_pull() {
 		   _rsync_opts=--exclude-from=$our_modified
 	fi
 
+	# now do the pull
 	run_rsync_cmd $_rsync_opts $snap_host:$snapshot/ $dst/
 	cd_ $dst
 	[[ -s .snap/files-pre-push ]] ||
