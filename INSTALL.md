@@ -41,7 +41,9 @@ Before you use snap in a new project tree, make sure you have told .gitignore **
 	output/
 	frozen/
  
- Now that you've set .gitignore these folders and files won't be included in any syncs with Github, so you don't have to worry about them anymore.
+Now that you've set .gitignore these folders and files won't be included in any syncs with Github, so you don't have to worry about them anymore.
+ 
+Confirm with git that the input/ and output/ are not in github's repo. You can look at the github repo through the web interface. 
  
 ### you're good to go. If you're looking for info on snap semantics, have a look at the README
 
