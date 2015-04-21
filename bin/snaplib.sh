@@ -148,7 +148,8 @@ compute_metadata() {
 					     timestr(getmtime(path))))
 	EOF
 
-	python $_tmp
+	[[ -s  $_tmp ]] || error "no space on $(dirname $_tmp)/ ?"
+	python $_tmp    || error "$snapserv_root/ out of disk space?"
 	rm $_tmp
 }
 
@@ -170,7 +171,8 @@ write_metadata() {
 	# the emacs temps in the -name patterns are duplicated in rsync_opts
 	find * \( -type f -o -type l \) \
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
-	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file
+	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
+	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space?"
 
 	if have_cmd shasum
 	   then local sha_cmd=shasum

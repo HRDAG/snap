@@ -52,6 +52,8 @@ let OPTIND=$OPTIND-1
 shift $OPTIND
 unset arg
 
+readonly original_dir=$PWD
+
 source_config /etc/$our_name.sh		# snapserv_root, rm_authorized_users
 [[ $snapserv_root ]] || error "need to set snapserv_root"
 
@@ -80,10 +82,13 @@ if [[ $1 == -c ]]
 	exit
 fi
 
+[[ ${SSH_ORIGINAL_COMMAND-} ]] || SSH_ORIGINAL_COMMAND="{local} $*"
+
 # echo "$@" | write scott pts/0; exit 1
 log "+ $SSH_ORIGINAL_COMMAND"
 
 case $SSH_ORIGINAL_COMMAND in
+  ( "{local} fix" )	is_rsync=$false ;;
   ( *[^-=._a-zA-Z0-9/\ *]* ) # optional, for globbing: {,} [^\]
 		error    "illegal character(s): $SSH_ORIGINAL_COMMAND" ;;
   ( *..* )      error    "can't use .. in path: $SSH_ORIGINAL_COMMAND" ;;
@@ -141,7 +146,7 @@ rsync_cmd() {
 	cd_ $my_new_head
 	rm -f .snap/*[^g]		# keep push.log
 	run_cmd rsync --server $rsync_server_opts -R --delete . . # user's data
-	echo "$project/$new_head" > .snap/revision
+	echo "$project/$new_head" > .snap/revision || error "snap repo full?"
 	if [[ -s .snap/paths-to-delete ]]
 	   then run_cmd xargs rm -f < .snap/paths-to-delete
 		run_cmd rm .snap/paths-to-delete
@@ -196,8 +201,15 @@ snap_cmd() {
 		run_cmd $action "$@" ;;
 	   ( du | ls | cat | head | tail )
 		run_cmd $action "$@" ;;
+	   ( fix )			# only for a repo hacker to run locally
+		cd_ $original_dir
+		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z]/s[0-9]+$ ]] ||
+		   error "need to be in a snapshot"
+		write_metadata ;;
 	esac
 }
+
+$Trace
 
 if [[ $is_rsync ]]
    then rsync_cmd
