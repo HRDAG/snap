@@ -255,26 +255,28 @@ snap_pull() {
 	files_to_paths .snap/files-local | # ignore files we don't have ...
 	  comm -12 $deleted_paths - > $spurious_paths
 	if [[ -s $spurious_paths ]]
-	   then set -- $(< $spurious_paths)
-		local ls_files="\n$(ls -C   $* | sed 's/^/  /')"
-		local ll_files="\n$(ls -ldF $* | sed 's/^/  /')"
-		warn "the following files were deleted from the repo:
-			$ll_files
-			$ls_files
+	   then local dirs=$(sed 's@/[^/]*$@@' $spurious_paths | sort -u)
+		set -- $(echo $dirs | tr ' ' '\n' | sed 's@/.*$@@' | uniq)
+		local parent_dirs=$*
+		local rm_parents_cmd="find $* -depth -type d -print0 | xargs -0 rmdir >& /dev/null"
+		local ls_dirs="\n$(ls -CdF $dirs | sed 's/^/  /')"
 
-  You'll be asked if you want them deleted locally (you won't be asked again,
-  if you decline or hit CTRL-c, which will cause a later 'snap push' to restore
-  the files on the repo); for each file, answer 'y', else 'n' or ENTER ..."
-		rm -i $(< $spurious_paths)
+		warn "Most/all the files in these directories disappeared (probably from a rename):
+			$ls_dirs"
+		local flag what="to delete such missing files"
+		read -n 1 -e -p "Type 'y' $what: " flag
+		[[ $flag == [yY]* ]] && xargs $Run rm -f < $spurious_paths || {
+		local deletes_file=.snap/deletes-ignored
+		$Run cp $spurious_paths $deletes_file
+		warn "files not deleted; if you change your mind, delete with:
+		cd $PWD
+		xargs rm -f < $deletes_file
+		$rm_parents_cmd
+		rm $deletes_file"
+		}
 
-		# for files that were deleted, delete any empty parent dirs
-		local file
-		while read file
-		    do	[[ -e "$file" ]] || echo "$file"
-		done < $spurious_paths > $deleted_paths
-		set -- $(sed 's@/.*$@@'  $deleted_paths | uniq)
-		[[ $# != 0 ]] &&
-		find $* -depth -type d -print0 | xargs -0 rmdir >& /dev/null
+		# delete any empty parent dirs
+		[[ $parent_dirs ]] && eval $rm_parents_cmd
 	fi
 
 	[[ ! -s $our_modified ]] && rm -f $tmp_files && return 0
