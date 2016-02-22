@@ -166,7 +166,7 @@ write_metadata() {
 	[[ ${Run-} ]] && metadata_file=/dev/tty
 	local dir fgrep_opts=
 	for dir in $snappable_subdirs
-	    do	fgrep_opts="$fgrep_opts -e $dir"
+	    do	fgrep_opts="$fgrep_opts -e /$dir/"
 	done
 	# the emacs temps in the -name patterns are duplicated in rsync_opts
 	find * \( -type f -o -type l \) \
