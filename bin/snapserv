@@ -127,7 +127,7 @@ rsync_cmd() {
 		sleep 0.5
 	done
 	readonly lock=$PWD/.lock
-	umask 002			# we use groyp perms for authorization
+	umask 002			# we use group perms for authorization
 	lockpid $lock || error "can't get lock: $(ls -l $lock)"
 	umask 022
 
