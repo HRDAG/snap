@@ -127,7 +127,9 @@ rsync_cmd() {
 		sleep 0.5
 	done
 	readonly lock=$PWD/.lock
+	umask 002			# we use groyp perms for authorization
 	lockpid $lock || error "can't get lock: $(ls -l $lock)"
+	umask 022
 
 	# recover from a failed "atomic" opeation (see end of this function)
 	[[ ! -s HEAD && -s HEAD.old ]] && run_cmd mv HEAD.old HEAD
