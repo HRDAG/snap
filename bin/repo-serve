@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# used in a ForceCommand inside a "Match All" block in /etc/ssh/sshd_config
+
+svn_log=/var/log/svn.log
+
+readonly \
+bad_cmd_msg="This key can only be used for 'snap' operations."
+
+umask 02			   # we use group permissions in data projects
+
+case ${SSH_ORIGINAL_COMMAND-} in
+   ( 'snap '* | 'rsync --server '* )	# these patterns duplicated in snapserv
+	exec /usr/local/bin/snapserv $SSH_ORIGINAL_COMMAND
+	exit 1 ;;
+   ( svnserve* )
+	exec /usr/bin/svnserve --tunnel --log-file $svn_log \
+			       --root=/var/repos/svn "$@"
+	exit 1 ;;
+   ( * )
+	[[ ${HRDAG_KEY-} != snap ]] &&
+	exec ${SSH_ORIGINAL_COMMAND:-/bin/bash -i}
+
+	echo -e "\n  $bad_cmd_msg\n"
+	source /etc/martus/prologue.sh
+	file=$tmpdir/$our_name-$(date -I)
+	{ header $(date); env | sort; } >> $file
+	sleep 3				# so PuTty has time to see it
+	exit 1 ;;
+esac
