@@ -7,10 +7,25 @@ svn_log=/var/log/svn.log
 readonly \
 bad_cmd_msg="This key can only be used for 'snap' operations."
 
+# if client wants rsync service, it could be from snap or generic rsync command
+if [[ ${SSH_ORIGINAL_COMMAND-} == 'rsync --server '* ]]
+   then [[ $UID == 0 ]] && { exec $SSH_ORIGINAL_COMMAND; exit $?; }
+	dest=${SSH_ORIGINAL_COMMAND##* . }
+	dest_dir=${dest%%/*}
+	case $dest_dir in
+	   ( [A-Z][A-Z]* | Ju )		# looks like a snap project name?
+		;;			# next case statement will process it
+	   ( * )
+		exec $SSH_ORIGINAL_COMMAND # else generic rsync command
+		exit $? ;;
+	 esac
+fi
+
 umask 02			   # we use group permissions in data projects
 
 case ${SSH_ORIGINAL_COMMAND-} in
    ( 'snap '* | 'rsync --server '* )	# these patterns duplicated in snapserv
+	# can add -t option, to output "set -x" to ~snap/.snapserv.log.dbg
 	exec /usr/local/bin/snapserv $SSH_ORIGINAL_COMMAND
 	exit 1 ;;
    ( svnserve* )
