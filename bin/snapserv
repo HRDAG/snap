@@ -61,10 +61,12 @@ readonly snapserv_root rm_authorized_users
 readonly log=${log:-$snapserv_root/.$our_name.log}
 if [[ ${SSH_CLIENT-} ]]
    then readonly who_am_i=$LOGNAME@${SSH_CLIENT%% *}
-   else readonly who_am_i=$LOGNAME
+   else readonly who_am_i=$LOGNAME	# snaplib looks for this variable
 fi
 
 log() { [[ -w $log ]] && echo "$date $who_am_i: $*" >> $log; }
+
+[[ $Trace ]] && exec 2>> $log.dbg
 
 [[ $1 == -d ]] && { Run=echo; shift; }
 if [[ $1 == -c ]]
@@ -93,7 +95,7 @@ case $SSH_ORIGINAL_COMMAND in
 		error    "illegal character(s): $SSH_ORIGINAL_COMMAND" ;;
   ( *..* )      error    "can't use .. in path: $SSH_ORIGINAL_COMMAND" ;;
   ( *[\	\ ]/* ) error "can't use absolute path: $SSH_ORIGINAL_COMMAND" ;;
-  # the next two patterns are duplicated in vcs-serve
+  # the next two patterns are duplicated in repo-serv
   ( 'snap '*		) is_rsync=$false ;;
   ( 'rsync --server '*	) is_rsync=$true  ;;
   ( * ) error "this can only be called by 'vcs-serve' on behalf of 'snap'" ;;
@@ -101,17 +103,25 @@ esac
 
 cd_ $snapserv_root
 
+# see set_rsync_opts() in 'snap' command
+if [[ ${SSH_CONNECTION-} == 127.0.0.* ]]
+   then rsync_compress_opt=
+   else rsync_compress_opt=$rsync_max_compress_opt
+fi
+readonly rsync_opts="$rsync_server_opts $rsync_compress_opt"
+
 rsync_cmd() {
 
 	data_dir=${SSH_ORIGINAL_COMMAND##* }
 	project=${data_dir%%/*}
+	[[ $project ]]    || error "expected snap command, got random rsync"
 	[[ -d $project ]] || error "project '$project' doesn't exist"
 
 	if   [[ $SSH_ORIGINAL_COMMAND == *' --sender '* ]]
-	   then exec rsync --server --sender $rsync_server_opts . $data_dir
+	   then exec rsync --server --sender $rsync_opts . $data_dir
 		error "exec rsync => $?"
 	elif [[ $SSH_ORIGINAL_COMMAND == */HEAD/.snap/ ]] # writing push.log?
-	   then exec rsync --server $rsync_server_opts . $data_dir
+	   then exec rsync --server $rsync_opts . $data_dir
 		error "exec rsync => $?"
 	fi
 
@@ -120,18 +130,16 @@ rsync_cmd() {
 
 	cd_ $project
 
-	# if 'snap push' sees 'Write failed: Broken pipe', ssh & rsync are hung
+	# if 'snap push' sees 'Write failed: Broken pipe', ssh & rsync hang
 	for signal in HUP TERM KILL
 	    do	ps -fC rsync |  grep --quiet "^$LOGNAME\b" || break
 		killall --process-group --user $LOGNAME --signal $signal rsync
 		sleep 0.5
 	done
 	readonly lock=$PWD/.lock
-	umask 002			# we use group perms for authorization
 	lockpid $lock || error "can't get lock: $(ls -l $lock)"
-	umask 022
 
-	# recover from a failed "atomic" opeation (see end of this function)
+	# recover from a failed "atomic" operation (see end of this function)
 	[[ ! -s HEAD && -s HEAD.old ]] && run_cmd mv HEAD.old HEAD
 	head=$(readlink HEAD)
 	if [[ ! $head ]]
@@ -147,7 +155,8 @@ rsync_cmd() {
 
 	cd_ $my_new_head
 	rm -f .snap/*[^g]		# keep push.log
-	run_cmd rsync --server $rsync_server_opts -R --delete . . # user's data
+	# copy the client's data into our current (user-private) directory
+	run_cmd rsync --server $rsync_opts -R --delete . .
 	echo "$project/$new_head" > .snap/revision || error "snap repo full?"
 	if [[ -s .snap/paths-to-delete ]]
 	   then run_cmd xargs rm -f < .snap/paths-to-delete

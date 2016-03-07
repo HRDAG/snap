@@ -39,15 +39,17 @@ Usage: $our_name [options] action [args]
       df [-i]: show free space (or inodes if -i) in repository
    Common options:
 	-s server: specify repository server (default $snap_host)
+	-v: run rsync in verbose mode (can use multiple times)
 	-V: show current version
 
 	-d: Debug shell script (don't run commands, just show them)
 	-t: Trace shell script (show commands as they execute)"
 
-Run= Trace= debug_opt= trace_opt=
-while getopts "s:V dthk" arg
+rsync_verbose_opt= Run= Trace= debug_opt= trace_opt=
+while getopts "s:vV dthk" arg
     do  case $arg in
 	   ( s ) snap_host=$OPTARG ;;
+	   ( v ) rsync_verbose_opt="-v $rsync_verbose_opt" ;;
 	   ( V ) error "version $Version" ;;
 
 	   ( d ) Run=echo       debug_opt=-d ;; # put $Run before 'active' cmds
@@ -71,7 +73,18 @@ unset arg
  project=
 local_rev=
 
-cd___source_config___set_project__local_rev() {
+set_rsync_opts() {
+
+	# see code in front of rsync_cmd() in 'snapserv'
+	if [[ ${snap_host#*@} == localhost ]]
+	   then local rsync_compress_opt=
+	   else local rsync_compress_opt=$rsync_max_compress_opt
+	fi
+	readonly \
+	rsync_opts="$rsync_client_opts $rsync_verbose_opt $rsync_compress_opt"
+}
+
+cd___source_config___set_project__local_rev__rsync_opts() {
 
 	source_config /etc/snap.sh
 	source_config ~/.snap.sh
@@ -82,6 +95,7 @@ cd___source_config___set_project__local_rev() {
 	   do	cd_ ..
 		[[ $PWD != / ]] && continue
 		cd_ $cwd
+		set_rsync_opts
 		return 1
 	done
 
@@ -99,6 +113,7 @@ cd___source_config___set_project__local_rev() {
 
 	source_config .snap/config.sh
 	readonly project local_rev snap_host
+	set_rsync_opts
 
 	return 0
 }
@@ -482,7 +497,8 @@ snap_log () {				# new way
 		warn "last pull was $(< .snap/revision), you're not up-to-date"
 	fi
 
-	reversed_lines .snap/push.log	# show newest log records first
+	# reversed_lines .snap/push.log	# show newest log records first
+	cat .snap/push.log		# show oldest first, in case too many
 }
 
 # ----------------------------------------------------------------------------
@@ -502,7 +518,7 @@ snap_du() {
 readonly action=$1; shift
 readonly our_name="$our_name $action"	# for 'error' function
 
-cd___source_config___set_project__local_rev ||
+cd___source_config___set_project__local_rev__rsync_opts ||
 case $action in
    ( pull | tags | log | du | df | ls | cat | head | tail | rm )
 	;;				# these accept project as argument

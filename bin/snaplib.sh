@@ -20,11 +20,13 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.12
+Version=0.2.13
 
 set -u					# error if expand unset variable
 
-umask 02				# we use group perms
+umask 02				# we use group perms for authorization
+
+# PATH=/usr/local/bin:$PATH		# get symlink to different rsync
 
 Run=					# caller can set (e.g. with getopts d)
 
@@ -33,12 +35,13 @@ Run=					# caller can set (e.g. with getopts d)
 # ----------------------------------------------------------------------------
 
 # the emacs temps in the --exclude patterns are duplicated in write_metadata
-readonly rsync_opts="--verbose --compress-level=9 --partial \
+readonly rsync_max_compress_opt="--compress-level=9"
+readonly rsync_client_opts="--verbose --partial
 	   --recursive --links --hard-links --times --sparse --omit-dir-times
 	   --exclude=*~ --exclude=#*# --exclude=.#*"
 # --server options that correspond to client's use of $rsync_opts;
 #    -O is not used when --sender
-readonly rsync_server_opts="-vlOHtrSze.iLs --compress-level=9 --partial"
+readonly rsync_server_opts="-vlOHtrSe.iLs --partial"
 
 readonly snappable_subdirs="input output frozen"
 
@@ -60,8 +63,16 @@ readonly date=$(date '+%a %m/%d %X %Z')
 # generic helper functions
 # ----------------------------------------------------------------------------
 
+readonly is_snapserv=${who_am_i-}
+
 have_cmd() { type -t "$@" &> /dev/null; }
-run_cmd () { $Run "$@" || error "$* => $?"; }
+run_cmd() {
+	$Run "$@" && return 0
+	local status=$?
+	[[ $is_snapserv ]] &&
+	log "  $* => $status"		# log defined in 'snapserv' command
+	error "$* => $status"
+}
 
 warn () { echo -e "\n$our_name: $*\n" >&2; have_cmd log && log "$@";return 1; }
 error() { warn "$*"; exit 1; }
