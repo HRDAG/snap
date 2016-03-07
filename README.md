@@ -18,7 +18,7 @@ project. Git is bad at keeping data files for the following reasons:
 
 
 # A bit more detail.[^1]
-**snap** is short for "snapshot." The point of snap is to separate the version control of data from source code. Version control systems are not good at handling big files (i.e., >1MB), so we don't keep them on github. Furthermore, much of our data is confidential, and we don't want to put it on a github server. Using snap for data, and github for code, we are able to segregate most (maybe all) of the actual data so it continues to live on our secure server at Benetech (maintained by Scott) rather than in git.
+**snap** is short for "snapshot." The point of snap is to separate the version control of data from source code. Version control systems are not good at handling big files (i.e., >1MB), so we don't keep them on github. Furthermore, much of our data is confidential, and we don't want to put it on a github server. Using snap for data, and github for code, we are able to segregate most (maybe all) of the actual data so it continues to live on our server 'eleanor' at HRDAG (maintained by Scott and Patrick) rather than in git.
 
 
 
@@ -32,7 +32,10 @@ When you're ready (i.e. have some data in input or output), put it into snap. Th
 
   `snap push -m "this is my commit message for snap"` 
 
-Uploading can take a while if you have a lot of data. Once it's done, snap will tell you a revision number. 
+Uploading can take a while if you have a lot of data (unless you run the snap command on HRDAG's 'eleanor' server, which hosts the snap repo). Once it's done, snap will tell you a revision number.
+
+WARNING: if you're running an rsync from/to/on the snap server and/or you're running a snap push or pull, a new 'snap push' will kill them all; this could be fixed with an hour or so of Scott's time.
+
 
 
 ### pull data from snap
@@ -78,7 +81,7 @@ You can check out specific versions of the data. For example, after looking at `
 
 ## open questions:
 
-- What to we do with hand/ files? are they code (in most projects this is just where we keep CONSTANTS files), or are they data (e.g. when we get data in weird formats, we tend to import it through a step of opening the files in hand and manually configuring stuff). wee need to think about this.
+- What to we do with hand/ files? are they code (in most projects this is just where we keep CONSTANTS files), or are they data (e.g. when we get data in weird formats, we tend to import it through a step of opening the files in hand and manually configuring stuff).  We need to think about this.
 
 
 

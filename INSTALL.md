@@ -1,7 +1,7 @@
 # Install snap[^1]
 Snap is short for snapshot 
 
-This file describes how to install and launch snapserv, and where to put (or symlink) snap.
+This file describes how to install and use snap (and should eventually describe how to install snapserv).
 
 ## 1) Define your GIT path
 
