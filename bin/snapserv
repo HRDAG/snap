@@ -130,10 +130,12 @@ rsync_cmd() {
 
 	cd_ $project
 
-	# if 'snap push' sees 'Write failed: Broken pipe', ssh & rsync hang
+	# if 'snap push' sees 'Write failed: Broken pipe', sshd & rsync hang.
+	# if the user is running an rsync from/to/on this server and/or
+	# is running a snap push or pull, a new 'snap push' will kill them all.
 	for signal in HUP TERM KILL
-	    do	ps -fC rsync |  grep --quiet "^$LOGNAME\b" || break
-		killall --process-group --user $LOGNAME --signal $signal rsync
+	    do	ps -fC rsync |  grep --quiet "^$LOGNAME\b.* --server " || break
+		killall -v --process-group --user $LOGNAME -s $signal rsync
 		sleep 0.5
 	done
 	readonly lock=$PWD/.lock
