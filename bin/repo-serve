@@ -33,8 +33,13 @@ case ${SSH_ORIGINAL_COMMAND-} in
 			       --root=/var/repos/svn "$@"
 	exit 1 ;;
    ( * )
-	[[ ${HRDAG_KEY-} != snap ]] &&
-	exec ${SSH_ORIGINAL_COMMAND:-/bin/bash -i}
+	if [[ ${HRDAG_KEY-} != snap ]]
+	   then if [[ ${SSH_ORIGINAL_COMMAND-} ]]
+		   then exec $SSH_ORIGINAL_COMMAND
+			exit $?
+		   else exit 0
+		fi
+	fi
 
 	echo -e "\n  $bad_cmd_msg\n"
 	source /etc/martus/prologue.sh
