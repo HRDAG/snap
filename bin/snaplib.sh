@@ -92,6 +92,14 @@ print_or_egrep_Usage_then_exit() {
 # functions used by snap and snapserv
 # ----------------------------------------------------------------------------
 
+readonly strace="strace -f -o /tmp/$LOGNAME/strace.log" # can prefix to rsync
+
+readonly ls_opts="--time-style=long-iso"
+
+tag_ls_filter() {
+	sed 's/^l[a-z.]* 1 //; s/ [^ ][^ ]*  *[0-9][0-9]*/ /; s/\(:.. \)/\1 /'
+}
+
 # convert_snap_metadata assumes that .snap.sha1 is renamed last
 readonly old_name__new_name__pairs="
 .snap.config		.snap/config

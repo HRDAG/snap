@@ -59,15 +59,16 @@ Here is an example from PB of snap tags used in the CO project:
 
 	pball@piglet:~/git/CO 
    		$ snap tags
-	lrwxrwxrwx. 1 kristianl CO    3 Oct  8 14:09 CO/HEAD -> s37
-	lrwxrwxrwx. 1 pball     CO    2 May 21 18:45 CO/v0.1 -> s7
-	lrwxrwxrwx. 1 pball     CO    3 Jun 30 21:04 CO/v0.2 -> s19
-	lrwxrwxrwx. 1 pball     CO    3 Jul  2 23:14 CO/v0.3 -> s20
-	lrwxrwxrwx. 1 pball     CO    3 Jul  8 02:35 CO/v1.0 -> s22
-	lrwxrwxrwx. 1 pball     CO    3 Jul 13 17:34 CO/v1.01 -> s25
-	lrwxrwxrwx. 1 pball     CO    3 Jul 20 10:28 CO/v1.1 -> s28
-	lrwxrwxrwx. 1 pball     CO    3 Jul 31 20:21 CO/v2.0 -> s32
-	lrwxrwxrwx. 1 pball     CO    3 Sep 15 22:59 CO/v3.0 -> s36
+	pball      2015-08-11 11:29  CO/HEAD -> s54
+	pball      2014-05-21 18:45  CO/v0.1 -> s7
+	pball      2014-06-30 21:04  CO/v0.2 -> s19
+	pball      2014-07-02 23:14  CO/v0.3 -> s20
+	pball      2014-07-08 02:35  CO/v1.0 -> s22
+	pball      2014-07-13 17:34  CO/v1.01 -> s25
+	pball      2014-07-20 10:28  CO/v1.1 -> s28
+	pball      2014-07-31 20:21  CO/v2.0 -> s32
+	pball      2014-09-15 22:59  CO/v3.0 -> s36
+	pball      2015-04-26 15:47  CO/v3.1 -> s44
 
 
 You can see that v3.0 points at s36. This allows you to reconstruct the code and the data at the point PB sent it to OHCHR back in September. 

@@ -473,17 +473,17 @@ snap_stat() {
 # ----------------------------------------------------------------------------
 
 _snap_ls() {
-	local ls_opts=$1 egrep_opts=$2; shift 2
+	local _ls_opts=$1 egrep_opts=$2; shift 2
 	[[ $# == 1 || $project ]] || error "not in workspace, specify project"
 	local _project=${1:-$project}
 
-	run_ssh_cmd ls $ls_opts "$_project/*" |
+	run_ssh_cmd ls $_ls_opts "$_project/*" |
 	  egrep $egrep_opts ' [A-Z]{2}[^/ ]*/s[1-9][0-9]*$'
 }
 
 # ------------------------------------
 
-snap_tags() { _snap_ls -ld  -v "$@"; }
+snap_tags() { _snap_ls -ld  -v "$@" | fgrep ' -> ' | tag_ls_filter; }
 snap_log_() { _snap_ls -ldt '' "$@"; }	# old way
 snap_log () {				# new way
 	local _project=${1:-$project}

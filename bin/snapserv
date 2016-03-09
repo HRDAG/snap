@@ -139,7 +139,8 @@ rsync_cmd() {
 		sleep 0.5
 	done
 	readonly lock=$PWD/.lock
-	lockpid $lock || error "can't get lock: $(ls -l $lock)"
+	lockpid $lock || 
+	   error "can't get lock: $(ls $ls_opts -l $lock)"
 
 	# recover from a failed "atomic" operation (see end of this function)
 	[[ ! -s HEAD && -s HEAD.old ]] && run_cmd mv HEAD.old HEAD
@@ -203,7 +204,8 @@ snap_cmd() {
 		cd    $project    || error "project $project is inaccessible"
 		[[ -d $rev ]] || error "snapshot $rev doesn't exist"
 		[[ ! -e  $tag_name ]] ||
-		   error "tag_name exists: $(ls -ld $tag_name)"
+		   error "tag_name exists: $(ls $ls_opts -ld $tag_name |
+						tag_ls_filter)"
 		run_cmd ln -s $rev $tag_name ;;
 	   ( rm )
 		[[ " "${rm_authorized_users:-NoNe}" " == *" $LOGNAME "*  ]] ||
@@ -212,6 +214,7 @@ snap_cmd() {
 		   error "can't delete whole projects"
 		run_cmd $action "$@" ;;
 	   ( du | ls | cat | head | tail )
+		[[ $action == ls ]] && set -- $ls_opts "$@"
 		run_cmd $action "$@" ;;
 	   ( fix )			# only for a repo hacker to run locally
 		cd_ $original_dir
