@@ -483,7 +483,7 @@ _snap_ls() {
 
 # ------------------------------------
 
-snap_tags() { _snap_ls -ld  -v "$@" | fgrep ' -> ' | tag_ls_filter; }
+snap_tags() { _snap_ls -ld  -v "$@" | fgrep ' -> ' | iso_ll_field_selector; }
 snap_log_() { _snap_ls -ldt '' "$@"; }	# old way
 snap_log () {				# new way
 	local _project=${1:-$project}

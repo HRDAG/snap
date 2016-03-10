@@ -2,3 +2,6 @@
 \~*
 *~
 .#*
+input/
+output/
+frozen/

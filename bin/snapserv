@@ -205,7 +205,7 @@ snap_cmd() {
 		[[ -d $rev ]] || error "snapshot $rev doesn't exist"
 		[[ ! -e  $tag_name ]] ||
 		   error "tag_name exists: $(ls $ls_opts -ld $tag_name |
-						tag_ls_filter)"
+						iso_ll_field_selector)"
 		run_cmd ln -s $rev $tag_name ;;
 	   ( rm )
 		[[ " "${rm_authorized_users:-NoNe}" " == *" $LOGNAME "*  ]] ||

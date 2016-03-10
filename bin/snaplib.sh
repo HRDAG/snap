@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.13
+Version=0.2.14
 
 set -u					# error if expand unset variable
 
@@ -46,6 +46,11 @@ readonly rsync_server_opts="-vlOHtrSe.iLs --partial"
 readonly snappable_subdirs="input output frozen"
 
 readonly true=t false=
+
+if [[ $(uname) == Linux ]]
+   then readonly is_linux=$true
+   else readonly is_linux=$false
+fi
 
 readonly tmpdir=/tmp/$(id -nu); mkdir -m 0700 -p $tmpdir
 our_name=${0##*/}			# caller can change this
@@ -94,10 +99,26 @@ print_or_egrep_Usage_then_exit() {
 
 readonly strace="strace -f -o /tmp/$LOGNAME/strace.log" # can prefix to rsync
 
-readonly ls_opts="--time-style=long-iso"
+if [[ $is_linux ]]
+   then readonly ls_opts="--time-style=long-iso" # GNU
+   else readonly ls_opts="-T"			 # Darwin / OS X
+fi
 
-tag_ls_filter() {
-	sed 's/^l[a-z.]* 1 //; s/ [^ ][^ ]*  *[0-9][0-9]*/ /; s/\(:.. \)/\1 /'
+# toss mode and link-count, then toss group and size
+readonly _ls_regexp_filter='s/^[-a-z.]+ +[0-9]+ +//; s/ [^ ]+ +[0-9]+ +/  /'
+#
+[[ $is_linux ]] && {
+iso_ll_field_selector() {
+	# this is the GNU version, whose ls -l --time-style=long-iso is e.g.:
+	# lrwxrwxrwx  1 scott EX     3 2014-05-14 Wed 15:56:57 label -> s18/
+	sed --regexp-extended -e "$_ls_regexp_filter" -e 's/(:.. )/\1 /'
+	}
+} || {
+iso_ll_field_selector() {
+	# this is the Darwin / OS X version, whose ls -lT output looks like:
+	# lrwxrwxrwx  33 pball  staff  1122 Mar 10 10:59:05 2016 label -> s10/
+	sed -E -e "$_ls_regexp_filter" -e 's/([A-Z].+) ([0-9]{4})/\2 \1 /'
+	}
 }
 
 # convert_snap_metadata assumes that .snap.sha1 is renamed last
