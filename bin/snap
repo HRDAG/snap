@@ -29,6 +29,7 @@ source snaplib.sh || exit 1
 Usage="
 Usage: $our_name [options] action [args]
    Current actions are:
+      origin: show server (and optional account) used to store snapshots
       pull [snapshot]: pull project snapshot (defaults to HEAD)
       push [-m msg|-F msg-file] [tag]: push workspace, then optionally tag
       stat [diff-opts]: show status of added/deleted/modified files
@@ -38,17 +39,17 @@ Usage: $our_name [options] action [args]
       du   [project]: du the project, defaults to workspace project
       df [-i]: show free space (or inodes if -i) in repository
    Common options:
-	-s server: specify repository server (default $snap_host)
+	-s server: specify repository server (run '$our_name origin' for default)
 	-v: run rsync in verbose mode (can use multiple times)
 	-V: show current version
 
 	-d: Debug shell script (don't run commands, just show them)
 	-t: Trace shell script (show commands as they execute)"
 
-rsync_verbose_opt= Run= Trace= debug_opt= trace_opt=
+_snap_host= rsync_verbose_opt= Run= Trace= debug_opt= trace_opt=
 while getopts "s:vV dthk" arg
     do  case $arg in
-	   ( s ) snap_host=$OPTARG ;;
+	   ( s ) _snap_host=$OPTARG ;;
 	   ( v ) rsync_verbose_opt="-v $rsync_verbose_opt" ;;
 	   ( V ) error "version $Version" ;;
 
@@ -64,16 +65,30 @@ unset arg
 
 [[ $# != 0 ]] || error "$Usage"
 
+readonly _snap_host rsync_verbose_opt
+
 [[ -n $Trace && -n $Run ]] && Run=:
 
 # ----------------------------------------------------------------------------
 # support functions
 # ----------------------------------------------------------------------------
 
+snap_origin() {
+
+	[[ $# == 0 ]] || error "arguments not allowed"
+
+	echo -e "\n${our_name%% *} assumes: snap_host=$snap_host"
+}
+
+# ----------------------------------------------------------------------------
+
  project=
 local_rev=
 
-set_rsync_opts() {
+set_rsync_opts__snap_host() {
+
+	[[ ${_snap_host-} ]] && snap_host=$_snap_host
+	readonly snap_host
 
 	# see code in front of rsync_cmd() in 'snapserv'
 	if [[ ${snap_host#*@} == localhost ]]
@@ -84,7 +99,7 @@ set_rsync_opts() {
 	rsync_opts="$rsync_client_opts $rsync_verbose_opt $rsync_compress_opt"
 }
 
-cd___source_config___set_project__local_rev__rsync_opts() {
+cd___source_config___set_project__local_rev__rsync_opts__snap_host() {
 
 	source_config /etc/snap.sh
 	source_config ~/.snap.sh
@@ -95,7 +110,7 @@ cd___source_config___set_project__local_rev__rsync_opts() {
 	   do	cd_ ..
 		[[ $PWD != / ]] && continue
 		cd_ $cwd
-		set_rsync_opts
+		set_rsync_opts__snap_host
 		return 1
 	done
 
@@ -112,8 +127,8 @@ cd___source_config___set_project__local_rev__rsync_opts() {
 	[[ -s .snap/revision ]] && local_rev=$(< .snap/revision)
 
 	source_config .snap/config.sh
-	readonly project local_rev snap_host
-	set_rsync_opts
+	set_rsync_opts__snap_host
+	readonly project local_rev
 
 	return 0
 }
@@ -518,17 +533,18 @@ snap_du() {
 readonly action=$1; shift
 readonly our_name="$our_name $action"	# for 'error' function
 
-cd___source_config___set_project__local_rev__rsync_opts ||
+cd___source_config___set_project__local_rev__rsync_opts__snap_host ||
 case $action in
-   ( pull | tags | log | du | df | ls | cat | head | tail | rm )
+   ( orig* | pull | tags | log | du | df | ls | cat | head | tail | rm )
 	;;				# these accept project as argument
    ( * ) error "couldn't find root of git workspace" ;;
 esac
 
 case $action in
+   ( orig*) snap_origin "$@" ;;
    ( pull ) snap_pull "$@" ;;
    ( push ) snap_push "$@" ;;
-   ( stat*) snap_stat "$@" ;;
+   ( st*  ) snap_stat "$@" ;;
    ( tag  ) snap_tag  "$@" ;;
    ( tags ) snap_tags "$@" ;;
    ( log  ) snap_log  "$@" ;;

@@ -163,8 +163,12 @@ convert_snap_metadata() {
 source_config() {
 	local file=$1
 
-	[[ -s  $file ]] || return 1
-	source $file || error "$file ended with non-0 status"
+	if [[ -s $file ]]
+	   then	source $file || error "$file ended with non-0 status"
+		[[ ${action-} == orig* ]] && echo "sourced $file"
+	   else [[ ${action-} == orig* ]] && echo "empty:  $file"
+		return 1
+	fi
 }
 
 # ----------------------------------------------------------------------------
