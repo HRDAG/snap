@@ -2,7 +2,7 @@
 
 #     snap is a utility to store some directories on a server, versioned.
 #
-# Copyright (C) 2014, Human Rights Data Analysis Group (HRDAG)
+# Copyright (C) 2014-2016, Human Rights Data Analysis Group (HRDAG)
 #     https://hrdag.org
 #
 # This file is part of snap.
@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.14
+Version=0.2.15
 
 set -u					# error if expand unset variable
 

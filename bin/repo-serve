@@ -7,8 +7,11 @@ svn_log=/var/log/svn.log
 readonly \
 bad_cmd_msg="This key can only be used for 'snap' operations."
 
-readonly tmp_dir=/tmp/$LOGNAME		# might not exist ...
-env | sort 2>/dev/null > $tmp_dir/repo-serve.env # ... so ignore errors
+for acct in ${LOGNAME-} $(id --name --user)
+    do	[[ $acct ]] || continue
+	tmp_dir=/tmp/$acct		# might not exist ...
+	env | sort 2>/dev/null > $tmp_dir/repo-serve.env && break
+done
 
 # if client wants rsync service, it could be from snap or generic rsync command
 if [[ ${SSH_ORIGINAL_COMMAND-} == 'rsync --server '* ]]
