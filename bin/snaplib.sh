@@ -117,7 +117,7 @@ iso_ll_field_selector() {
 iso_ll_field_selector() {
 	# this is the Darwin / OS X version, whose ls -lT output looks like:
 	# lrwxrwxrwx  33 pball  staff  1122 Mar 10 10:59:05 2016 label -> s10/
-	sed -E -e "$_ls_regexp_filter" -e 's/([A-Z].+) ([0-9]{4})/\2 \1 /'
+	sed -E -e "$_ls_regexp_filter" -e 's/([A-Z].+) ([0-9]{4})/\2 \1  /'
 	}
 }
 

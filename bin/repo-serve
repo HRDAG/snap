@@ -44,7 +44,7 @@ case ${SSH_ORIGINAL_COMMAND-} in
 		   then exec $SSH_ORIGINAL_COMMAND
 			exit $?
 		elif [[ ${SSH_TTY-} || ${TERM-} ]] # want interactive shell?
-		   then exec bash -i
+		   then exec bash --login
 			exit $?
 		   else exit 0		# probably SSH tunnel
 		fi
