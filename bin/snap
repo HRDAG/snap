@@ -21,7 +21,7 @@
 # snap_host can also be set in .snap/config.sh, ~/.snap.sh, /etc/snap.sh
 if [[ -s /etc/snapserv.sh ]]
    then snap_host=localhost
-   else snap_host=svn.hrdag.org
+   else snap_host=eleanor.hrdag.org
 fi
 
 source snaplib.sh || exit 1
