@@ -23,6 +23,8 @@
 PATH=$PATH:/usr/local/bin		# so can find snaplib.sh & lockpid
 source snaplib.sh || exit 1
 
+umask 02			  # we use group permissions for authorization
+
 Usage="
 Usage: $our_name [options] [project(s)]
    Options:
