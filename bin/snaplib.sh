@@ -201,9 +201,11 @@ compute_metadata() {
 
 write_metadata() {
 
-	if [[ $our_name == snapserv ]]
-	   then local metadata_file=.snap/files-repo
-	   else local metadata_file=.snap/files-local
+	if [[ $our_name != snapserv ]]
+	   then local  metadata_file=.snap/files-local
+	   else local  metadata_file=.snap/files-repo
+		# these could be hardlinked from an older snapshot
+		rm -f $metadata_file $metadata_file.sha1
 	fi
 	run_cmd mkdir -p .snap	  # might be fixing a half-initialized project
 
@@ -216,7 +218,7 @@ write_metadata() {
 	find * \( -type f -o -type l \) \
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
 	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
-	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space?"
+	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"
 
 	if have_cmd shasum
 	   then local sha_cmd=shasum

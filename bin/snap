@@ -425,7 +425,7 @@ snap_push() {
 	local rsync_output=$tmp_1
 	while true
 	   do	# pipeline runs rsync in separate process: ok if exits on error
-		run_rsync_cmd --delete --relative \
+		run_rsync_cmd --delete --relative --exclude=.snap/revision \
 				  $paths_to_delete $snappable_dirs \
 				  $snap_host:$project/ 2>&1 | tee $rsync_output
 		local status=${PIPESTATUS[0]} # rsync's exit status
