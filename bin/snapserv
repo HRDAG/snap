@@ -160,8 +160,10 @@ rsync_cmd() {
 
 	cd_ $my_new_head
 	rm -f .snap/*[^g]		# keep push.log
-	# copy the client's data into our current (user-private) directory
-	run_cmd rsync --server $rsync_opts -R --delete . .
+	# copy the client's data into our current (user-private) directory;
+	# no matter what the sender says, enforce the perms we want.
+	run_cmd rsync --server $rsync_opts --perms --chmod=Dg+s,ug+w,o-w,+X \
+		      --relative --delete . .
 	echo "$project/$new_head" > .snap/revision || error "snap repo full?"
 	if [[ -s .snap/paths-to-delete ]]
 	   then run_cmd xargs rm -f < .snap/paths-to-delete
