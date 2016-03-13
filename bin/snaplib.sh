@@ -34,11 +34,12 @@ Run=					# caller can set (e.g. with getopts d)
 # constants
 # ----------------------------------------------------------------------------
 
-# the emacs temps in the --exclude patterns are duplicated in write_metadata
 readonly rsync_max_compress_opt="--compress-level=9"
+readonly rsync_output=.snap/rsync.log
+# the --exclude patterns are duplicated in write_metadata
 readonly rsync_client_opts="--verbose --partial
 	   --recursive --links --hard-links --times --sparse --omit-dir-times
-	   --exclude=*~ --exclude=#*# --exclude=.#*"
+	   --exclude=$rsync_output* --exclude=*~ --exclude=#*# --exclude=.#*"
 # --server options that correspond to client's use of $rsync_opts;
 #    -O is not used when --sender
 readonly rsync_server_opts="-vlOHtrSe.iLs --partial"
@@ -214,8 +215,8 @@ write_metadata() {
 	for dir in $snappable_subdirs
 	    do	fgrep_opts="$fgrep_opts -e /$dir/"
 	done
-	# the emacs temps in the -name patterns are duplicated in rsync_opts
-	find * \( -type f -o -type l \) \
+	# the -path arg & -name patterns are duplicated in rsync_client_opts
+	find * \( -type f -o -type l \) ! -path "$rsync_output*" \
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
 	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
 	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"

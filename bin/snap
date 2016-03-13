@@ -275,7 +275,9 @@ snap_pull() {
 	fi
 
 	# now do the pull
-	run_rsync_cmd $_rsync_opts $snap_host:$snapshot/ $dst/
+	[[ -s $rsync_output ]] && mv $rsync_output $rsync_output.old
+	run_rsync_cmd $_rsync_opts $snap_host:$snapshot/ $dst/ 2>&1 |
+	  tee $rsync_output
 	cd_ $dst
 	[[ -s .snap/files-pre-push ]] ||
 	   run_cmd cp .snap/files-repo .snap/files-pre-push
@@ -422,7 +424,7 @@ snap_push() {
 	fi >  $paths_to_delete
 	[[ -s $paths_to_delete ]] || paths_to_delete=
 
-	local rsync_output=$tmp_1
+	[[ -s $rsync_output ]] && mv $rsync_output $rsync_output.old
 	while true
 	   do	# pipeline runs rsync in separate process: ok if exits on error
 		run_rsync_cmd --delete --relative --exclude=.snap/revision \
@@ -433,7 +435,6 @@ snap_push() {
 		file_contains_restartable_rsync_error $rsync_output || exit 1
 		warn "rsync exited with $status, continuing where left off"
 	done
-	rm $rsync_output
 	run_cmd cp .snap/files-local .snap/files-pre-push
 
 	snap_pull -i 2>&1 |		# grab the new snapshot's .snap/* files
