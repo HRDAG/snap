@@ -322,7 +322,7 @@ snap_pull() {
 	[[ $conflict_files ]] || return 0
 
 	warn "since your previous pull, both you and someone else modified these file(s):"
-	echo "$conflict_files" | sed 's/^/  /'
+	echo "$conflict_files" | sed 's/^/  /' >&2
 	warn "this pull did _not_ replace your local version(s) of these files.
   (If you want to see the repo's version, temporarily rename yours then pull.)
   You won't see this warning again: you must consider these conflicts now."
