@@ -359,7 +359,7 @@ set_comment() {
 update_log() {
 
 	local   _date=$(date -u '+%F %T UTC (%a)')
-	local  record="$local_rev | $LOGNAME | $_date | ${comment:---}"
+	local  record="$new_rev | $LOGNAME | $_date | ${comment:---}"
 	echo "$record" >> .snap/push.log &&
 	$Run rsync $rsync_opts -q .snap/push.log $snap_host:$project/HEAD/.snap/
 }
@@ -368,7 +368,7 @@ update_log() {
 
 is_head() {
 
-	local head_rev=$(ssh_snap_q cat $project/HEAD/.snap/revision)
+	      head_rev=$(ssh_snap_q cat $project/HEAD/.snap/revision) # global
 	[[ ! $head_rev && $local_rev ]] && error "missing $project/HEAD ?"
 	[[ ! $head_rev || $local_rev == $head_rev ]]
 }
@@ -516,6 +516,11 @@ snap_log () {				# new way
 
 	# reversed_lines .snap/push.log	# show newest log records first
 	cat .snap/push.log		# show oldest first, in case too many
+
+	[[ $(tail -n1 .snap/push.log) == "$head_rev "* ]] && return
+return	     # must first fix push.log records by incrementing revision # 
+	warn "missing $head_rev record, see below; ask Scott to fix this"
+	snap_log_ "$@" | tail -n3
 }
 
 # ----------------------------------------------------------------------------
