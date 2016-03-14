@@ -484,7 +484,7 @@ snap_stat() {
 
 	write_metadata
 	diff --unified=0 "$@" .snap/files-repo .snap/files-local &&
-	   echo "No local changes (local files match files in repo's HEAD)."
+	   echo "No changes (local files not changed since pulled from repo)."
 }
 
 # ----------------------------------------------------------------------------
