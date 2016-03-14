@@ -69,11 +69,6 @@ fi
 
 log() { [[ -w $log ]] && echo "$date $who_am_i: $*" >> $log; }
 
-if [[ $Trace ]]
-   then exec 2>> $log.dbg
-   else exec 2>> $log
-fi
-
 [[ $1 == -d ]] && { Run=echo; shift; }
 if [[ $1 == -c ]]
    then shift
@@ -115,6 +110,8 @@ if [[ ${SSH_CONNECTION-} == 127.0.0.* ]]
    else rsync_compress_opt=$rsync_max_compress_opt
 fi
 readonly rsync_opts="$rsync_server_opts $rsync_compress_opt"
+
+[[ $Trace ]] && exec 2>> $log.dbg
 
 rsync_cmd() {
 
