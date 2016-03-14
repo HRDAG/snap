@@ -483,7 +483,8 @@ snap_stat() {
 	[[ $project ]] || error "need to be in a data project"
 
 	write_metadata
-	diff --unified=0 "$@" .snap/files-repo .snap/files-local
+	diff --unified=0 "$@" .snap/files-repo .snap/files-local &&
+	   echo "No local changes (local files match files in repo's HEAD)."
 }
 
 # ----------------------------------------------------------------------------
@@ -499,8 +500,8 @@ _snap_ls() {
 
 # ------------------------------------
 
-snap_tags() { _snap_ls -ld  -v "$@" | fgrep ' -> ' | iso_ll_field_selector; }
-snap_log_() { _snap_ls -ldt '' "$@"; }	# old way
+snap_tags() { _snap_ls -ld   -v "$@" | fgrep ' -> ' | iso_ll_field_selector; }
+snap_log_() { _snap_ls -ldtr '' "$@"; }	# old way
 snap_log () {				# new way
 	local _project=${1:-$project}
 	[[ $_project ]] || error "need to specify a project or be in workspace"
