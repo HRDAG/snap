@@ -2,6 +2,8 @@
 
 # used in a ForceCommand inside a "Match All" block in /etc/ssh/sshd_config
 
+# [[ $LOGNAME == scott ]] && snapserv_opts=-t # uncomment to debug
+
 svn_log=/var/log/svn.log
 
 readonly \
@@ -32,7 +34,7 @@ umask 02			   # we use group permissions in data projects
 case ${SSH_ORIGINAL_COMMAND-} in
    ( 'snap '* | 'rsync --server '* )	# these patterns duplicated in snapserv
 	# can add -t option, to output "set -x" to ~snap/.snapserv.log.dbg
-	exec /usr/local/bin/snapserv $SSH_ORIGINAL_COMMAND
+	exec /usr/local/bin/snapserv ${snapserv_opts-} $SSH_ORIGINAL_COMMAND
 	exit 1 ;;
    ( svnserve* )
 	exec /usr/bin/svnserve --tunnel --log-file $svn_log \
