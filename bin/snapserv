@@ -24,7 +24,7 @@ PATH=$PATH:/usr/local/bin		# so can find snaplib.sh & lockpid
 source snaplib.sh || exit 1
 
 umask 02			  # we use group permissions for authorization
-declare -i max_snapshots_to_check=5; readonly max_snapshots_to_check
+declare -i max_snapshots_to_check=10	# can change in config file, see below
 
 Usage="
 Usage: $our_name [options] [project(s)]
@@ -57,10 +57,11 @@ unset arg
 
 readonly original_dir=$PWD
 
-source_config /etc/$our_name.sh		# snapserv_root, rm_authorized_users
+# can set: snapserv_root rm_authorized_users max_snapshots_to_check
+source_config /etc/$our_name.sh
+readonly   snapserv_root rm_authorized_users max_snapshots_to_check
 [[ $snapserv_root ]] || error "need to set snapserv_root"
 
-readonly snapserv_root rm_authorized_users
 readonly log=${log:-$snapserv_root/.$our_name.log}
 if [[ ${SSH_CLIENT-} ]]
    then readonly who_am_i=$LOGNAME@${SSH_CLIENT%% *}
@@ -156,16 +157,19 @@ rsync_cmd() {
 
 	rm -rf $new_head HEAD.*		# could have old, failed attempt
 
+	run_cmd mkdir -p $my_new_head/.snap # .snap needed for first push (?)
+	cd_ $my_new_head
+
 	declare -i snapshots_used=0
 	link_dest_opts=
-	for (( snapshot_num=$head_num; $snapshot_num > 0; snapshot_num-=1 ))
-	    do	link_dest_opts="$link_dest_opts --link-dest=../s$snapshot_num"
+	for ((  snapshot_num=$head_num; $snapshot_num > 0; snapshot_num-=1 ))
+	    do	snapshot=../s$snapshot_num
+		[[ -d $snapshot ]] || continue
+		link_dest_opts="$link_dest_opts --link-dest=$snapshot"
 		   snapshots_used+=1
 		(( snapshots_used < max_snapshots_to_check )) || break
 	done
 
-	run_cmd mkdir -p $my_new_head/.snap # .snap needed for first push (?)
-	cd_ $my_new_head
 	# copy the client's data into our current (user-private) directory;
 	# no matter what the sender says, enforce the perms we want.
 	run_cmd rsync --server $rsync_opts $link_dest_opts \
