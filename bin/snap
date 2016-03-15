@@ -357,9 +357,10 @@ set_comment() {
 # --------------------------------------------
 
 update_log() {
+	local rev=$1
 
 	local   _date=$(date -u '+%F %T UTC (%a)')
-	local  record="$new_rev | $LOGNAME | $_date | ${comment:---}"
+	local  record="$rev | $LOGNAME | $_date | ${comment:---}"
 	echo "$record" >> .snap/push.log &&
 	$Run rsync $rsync_opts -q .snap/push.log $snap_host:$project/HEAD/.snap/
 }
@@ -445,7 +446,7 @@ snap_push() {
 	local new_rev=$(< .snap/revision)
 	warn "successfully pushed $new_rev"
 
-	update_log			# run _after_ snap_pull, so latest log
+	update_log $new_rev	   # run _after_ 'snap_pull -i', so latest log
 
 	[[ $tag ]] && snap_tag $new_rev "$tag" # ... similarly
 	return 0

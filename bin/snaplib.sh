@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.16
+Version=0.2.17
 
 set -u					# error if expand unset variable
 
