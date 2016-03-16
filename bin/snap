@@ -160,7 +160,7 @@ run_ssh_cmd() {
 ssh_snap_q() {
 
 	$Trace
-	ssh $snap_host snap "$@" 2>/dev/null
+	$Run ssh $snap_host snap "$@" 2>/dev/null
 	set +x
 }
 
@@ -277,7 +277,7 @@ snap_pull() {
 	# now do the pull
 	[[ -s $rsync_output ]] && mv $rsync_output $rsync_output.old
 	run_rsync_cmd $_rsync_opts $snap_host:$snapshot/ $dst/ 2>&1 |
-	  tee $rsync_output
+	   tee $rsync_output
 	cd_ $dst
 	[[ -s .snap/files-pre-push ]] ||
 	   run_cmd cp .snap/files-repo .snap/files-pre-push
@@ -555,7 +555,7 @@ case $action in
    ( st*  ) snap_stat "$@" ;;
    ( tag  ) snap_tag  "$@" ;;
    ( tags ) snap_tags "$@" ;;
-   ( log  ) snap_log  "$@" ;;
+   ( log* ) snap_log  "$@" ;;
    ( du   ) snap_du   "$@" ;;
    ( df | ls | cat | head | tail | rm )
 	[[ $action == ls && $# == 0 ]] && set -- -CF
