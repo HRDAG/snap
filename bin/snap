@@ -73,15 +73,6 @@ readonly _snap_host rsync_verbose_opt
 # support functions
 # ----------------------------------------------------------------------------
 
-snap_origin() {
-
-	[[ $# == 0 ]] || error "arguments not allowed"
-
-	echo -e "\n${our_name%% *} assumes: snap_host=$snap_host"
-}
-
-# ----------------------------------------------------------------------------
-
  project=
 local_rev=
 
@@ -202,6 +193,15 @@ reversed_lines() {
 
 # ----------------------------------------------------------------------------
 # snap actions
+# ----------------------------------------------------------------------------
+
+snap_origin() {
+
+	[[ $# == 0 ]] || error "arguments not allowed"
+
+	echo -e "\n${our_name%% *} assumes: snap_host=$snap_host"
+}
+
 # ----------------------------------------------------------------------------
 
 files_to_paths() {
