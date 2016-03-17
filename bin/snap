@@ -21,11 +21,13 @@
 # snap_host can also be set in .snap/config.sh, ~/.snap.sh, /etc/snap.sh
 if [[ -s /etc/snapserv.sh ]]
    then snap_host=localhost
-   else snap_host=eleanor.hrdag.org
+   else snap_host=$default_snap_host
 fi
 
 source snaplib.sh || exit 1
 
+# ls less useful: du shows non-empty repos, log has details of snapshots
+#      ls   [project]: show repos [or our snapshots]; many repos are empty ...
 Usage="
 Usage: $our_name [options] action [args]
    Current actions are:
@@ -36,7 +38,7 @@ Usage: $our_name [options] action [args]
       tag  [snapshot] tag-name: tag snapshot (defaults to HEAD)
       tags [project]: show all tags , defaults to workspace project
       log  [project]: show all snaps, defaults to workspace project
-      du   [project]: du the project, defaults to workspace project
+      du   [project]: 'du' project(s), defaults to workspace project
       df [-i]: show free space (or inodes if -i) in repository
    Common options:
 	-s server: specify repository server (run '$our_name origin' for default)
@@ -67,6 +69,8 @@ unset arg
 
 readonly _snap_host rsync_verbose_opt
 
+export HRDAG_SNAP_VERSION=$Version
+
 [[ -n $Trace && -n $Run ]] && Run=:
 
 # ----------------------------------------------------------------------------
@@ -88,7 +92,11 @@ set_rsync_opts__snap_host() {
 	fi
 	readonly \
 	rsync_opts="$rsync_client_opts $rsync_verbose_opt $rsync_compress_opt"
+
+	check_env			# this needs snap_host
 }
+
+# ---------------------------------
 
 cd___source_config___set_project__local_rev__rsync_opts__snap_host() {
 
@@ -126,6 +134,24 @@ cd___source_config___set_project__local_rev__rsync_opts__snap_host() {
 
 # ----------------------------------------------------------------------------
 
+check_env() {
+
+	egrep --quiet '^[[:space:]]*SendEnv[=[:space:]]+HRDAG_SNAP_VERSION($|[[:space:]])' ~/.ssh/config && return 0
+
+	warn 'you need to add "SendEnv HRDAG_SNAP_VERSION" to ~/.ssh/config,
+either in a "Host *" stanza, or in your eleanor (aer) stanza'
+
+	egrep --quiet '^[[:space:]]*ControlMaster[=[:space:]]' ~/.ssh/config&&
+	warn "after you update ~/.ssh/config, you should run:
+	ssh -O exit $snap_host
+but _only_ after you finish your work in any login sessions, or tunnels
+to RStudio or Jupyter Notebook services, since they'll all be killed"
+
+	exit 1
+}
+
+# ----------------------------------------------------------------------------
+
 is_workspace_modified() {
 
 	write_metadata			# caller expects this always happens
@@ -137,11 +163,18 @@ is_workspace_modified() {
 
 # ----------------------------------------------------------------------------
 
+set_ssh_cmd() {
+
+	ssh_cmd="ssh $snap_host snap"
+}
+
+# -------------------------------------------------------
+
 run_ssh_cmd() {
 
-	local cmd="ssh $snap_host snap"
+	set_ssh_cmd
 	$Trace
-	$Run $cmd "$@" || error "$cmd $* => $?"
+	$Run $ssh_cmd "$@" || error "$ssh_cmd $* => $?"
 	set +x
 }
 
@@ -150,8 +183,9 @@ run_ssh_cmd() {
 # the 'q' is for quiet, this command silently ignores errors
 ssh_snap_q() {
 
+	set_ssh_cmd
 	$Trace
-	$Run ssh $snap_host snap "$@" 2>/dev/null
+	$Run $ssh_cmd "$@" 2>/dev/null
 	set +x
 }
 
@@ -369,7 +403,10 @@ update_log() {
 
 is_head() {
 
-	      head_rev=$(ssh_snap_q cat $project/HEAD/.snap/revision) # global
+	local err=$tmp_5
+	head_rev=$(run_ssh_cmd cat $project/HEAD/.snap/revision 2>$err) #globl
+	egrep -v ': No such file or directory$' $err # OK if cat fails
+	egrep --quiet snapserv: $err && exit 1	     # snapserv error?
 	[[ ! $head_rev && $local_rev ]] && error "missing $project/HEAD ?"
 	[[ ! $head_rev || $local_rev == $head_rev ]]
 }
@@ -512,7 +549,8 @@ snap_log () {				# new way
 	if ! is_head
 	   then $Run rsync $rsync_opts --quiet \
 			   $snap_host:$_project/HEAD/.snap/push.log .snap/
-		warn "last pull was $(< .snap/revision), you're not up-to-date"
+		local rev=$(< .snap/revision)
+		warn "your last pull was $rev, your workspace is out-of-date"
 	fi
 
 	# reversed_lines .snap/push.log	# show newest log records first
@@ -530,8 +568,10 @@ snap_du() {
 	[[ ${1-} == -* ]] && { local du_opts=$1; shift; } || local du_opts=
 	local _project=${1:-$project}
 
-	# empty Linux directories are 4 KB, and GNU ls displays as 4.0K
+	$Trace
+	# empty Linux directories are 4 KB; GNU ls displays as 4.0K when -h
 	ssh_snap_q du -h -s $du_opts "${_project:-*}" | egrep -v '^4.0K'
+	set +x
 }
 
 # ----------------------------------------------------------------------------
@@ -539,7 +579,8 @@ snap_du() {
 # ----------------------------------------------------------------------------
 
 readonly action=$1; shift
-readonly our_name="$our_name $action"	# for 'error' function
+readonly _our_name="$our_name"		# when don't want action in msg
+readonly  our_name="$our_name $action"	# for 'error' function
 
 cd___source_config___set_project__local_rev__rsync_opts__snap_host ||
 case $action in
