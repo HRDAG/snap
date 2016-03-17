@@ -18,13 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+source snaplib.sh || exit 1
+
 # snap_host can also be set in .snap/config.sh, ~/.snap.sh, /etc/snap.sh
 if [[ -s /etc/snapserv.sh ]]
    then snap_host=localhost
    else snap_host=$default_snap_host
 fi
-
-source snaplib.sh || exit 1
 
 # ls less useful: du shows non-empty repos, log has details of snapshots
 #      ls   [project]: show repos [or our snapshots]; many repos are empty ...
