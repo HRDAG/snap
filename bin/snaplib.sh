@@ -20,7 +20,12 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.17
+Version=0.2.18
+Version_required=0.2.18	     # 'snap log' records had old revision not new one
+
+maintainer="Scott Weikart <sweikart@gmail.com>"
+
+default_snap_host=eleanor.hrdag.org
 
 set -u					# error if expand unset variable
 
@@ -120,6 +125,15 @@ iso_ll_field_selector() {
 	# lrwxrwxrwx  33 pball  staff  1122 Mar 10 10:59:05 2016 label -> s10/
 	sed -E -e "$_ls_regexp_filter" -e 's/([A-Z].+) ([0-9]{4})/\2 \1  /'
 	}
+}
+
+declare -i version_num
+#
+set_version_num() {
+	local version=$1
+
+	set -- $(echo $version | tr . ' ')
+	let version_num="( ( ($1 * 1000) + $2) * 1000 ) + $3"
 }
 
 # convert_snap_metadata assumes that .snap.sha1 is renamed last
