@@ -114,6 +114,33 @@ readonly rsync_opts="$rsync_server_opts $rsync_compress_opt"
 
 [[ $Trace ]] && exec 2>> $log.dbg
 
+# ----------------------------------------------------------------------------
+
+abort_if_client_too_old() {
+	local sleep_time=${1-}
+
+	set_version_num $Version_required
+	local required_version_num=$version_num
+
+	set_version_num ${HRDAG_SNAP_VERSION-0.0.0}
+	(( $version_num >= $required_version_num )) && return 0
+
+	warn "Your 'snap' command is too old; you need to
+run \"git pull\" in your 'snap' workspace (HRDAG/snap.git checkout)."
+
+	[[ ${HRDAG_SNAP_VERSION-} ]] ||
+	warn "If you still get this error after updating your 'snap' command,
+you probably forgot to run \"ssh -O exit $default_snap_host\"; otherwise,
+email the file ~/.ssh/config to $maintainer,
+so he can debug your problem."
+
+	[[ $sleep_time ]] || exit 1
+
+	warn "You can hit CTRL-C when you're ready to fix this problem."
+	$Run sleep $sleep_time
+	exit 1
+}
+
 rsync_cmd() {
 
 	data_dir=${SSH_ORIGINAL_COMMAND##* }
@@ -121,7 +148,7 @@ rsync_cmd() {
 	[[ $project ]]    || error "expected snap command, got random rsync"
 	[[ -d $project ]] || error "project '$project' doesn't exist"
 
-	if   [[ $SSH_ORIGINAL_COMMAND == *' --sender '* ]]
+	if   [[ $SSH_ORIGINAL_COMMAND == *' --sender '* ]] # snap pull?
 	   then exec rsync --server --sender $rsync_opts . $data_dir
 		error "exec rsync => $?"
 	elif [[ $SSH_ORIGINAL_COMMAND == */HEAD/.snap/ ]] # writing push.log?
@@ -131,6 +158,9 @@ rsync_cmd() {
 
 	data_dir=${data_dir%/}
 	[[ $data_dir == $project ]] || error "you can only checkin a new HEAD"
+
+	# client continually runs rsync, so wait after any error messages
+	abort_if_client_too_old 1m
 
 	cd_ $project
 
