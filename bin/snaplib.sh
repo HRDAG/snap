@@ -199,6 +199,8 @@ source_config() {
 	   else [[ ${action-} == orig* ]] && echo "empty:  $file"
 		return 1
 	fi
+
+	return 0
 }
 
 # ----------------------------------------------------------------------------
