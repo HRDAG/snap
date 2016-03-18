@@ -20,10 +20,11 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.18
+Version=0.2.19		     # must have three segments (Version_required also)
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
+Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 
-maintainer="Scott Weikart <sweikart@gmail.com>"
+maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
 default_snap_host=eleanor.hrdag.org
 
@@ -44,7 +45,8 @@ readonly rsync_output=.snap/rsync.log
 # the --exclude patterns are duplicated in write_metadata
 readonly rsync_client_opts="--verbose --partial
 	   --recursive --links --hard-links --times --sparse --omit-dir-times
-	   --exclude=$rsync_output* --exclude=*~ --exclude=#*# --exclude=.#*"
+	   --exclude=$rsync_output*   --exclude=.DS_Store
+	   --exclude=*~ --exclude=#*# --exclude=.#*"
 # --server options that correspond to client's use of $rsync_opts;
 #    -O is not used when --sender
 readonly rsync_server_opts="-vlOHtrSe.iLs --partial"
@@ -127,9 +129,22 @@ iso_ll_field_selector() {
 	}
 }
 
-declare -i version_num
+abort_if_bad_version_format() {
+	local variable_name=$1
+
+	local version=${!variable_name}
+
+	[[ $version == *.*.* && ! $version == *.*.*.* ]] ||
+	   error "$variable_name's value needs to have exactly 3 segments"
+
+	[[ $version != *[^.0-9]* ]] ||
+	   error "$variable_name's segments must be all digits"
+}
+abort_if_bad_version_format Version
+abort_if_bad_version_format Version_required
 #
-set_version_num() {
+declare -i version_num
+ set_version_num() {
 	local version=$1
 
 	set -- $(echo $version | tr . ' ')
@@ -230,7 +245,8 @@ write_metadata() {
 	    do	fgrep_opts="$fgrep_opts -e /$dir/"
 	done
 	# the -path arg & -name patterns are duplicated in rsync_client_opts
-	find * \( -type f -o -type l \) ! -path "$rsync_output*" \
+	find * \( -type f -o -type l \) \
+	     ! -path "$rsync_output*"   ! -name .DS_Store \
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
 	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
 	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"
