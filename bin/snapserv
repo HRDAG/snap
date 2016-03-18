@@ -58,9 +58,10 @@ unset arg
 readonly original_dir=$PWD
 
 # can set: snapserv_root rm_authorized_users max_snapshots_to_check
-source_config /etc/$our_name.sh
+our_config=/etc/$our_name.sh
+source_config $our_config || error "$our_config ended with non-0 status"
 readonly   snapserv_root rm_authorized_users max_snapshots_to_check
-[[ $snapserv_root ]] || error "need to set snapserv_root"
+[[ $snapserv_root ]] || error "need to set snapserv_root in $our_config"
 
 readonly log=${log:-$snapserv_root/.$our_name.log}
 if [[ ${SSH_CLIENT-} ]]
