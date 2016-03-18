@@ -467,7 +467,8 @@ snap_push() {
 	   do	# pipeline runs rsync in separate process: ok if exits on error
 		run_rsync_cmd --delete --relative --exclude=.snap/revision \
 				  $paths_to_delete $snappable_dirs \
-				  $snap_host:$project/ 2>&1 | tee $rsync_output
+				  $snap_host:$project/ 2>&1 |
+		   tee $rsync_output | fgrep -v ' (0B -> '
 		local status=${PIPESTATUS[0]} # rsync's exit status
 		[[ $status == 0 ]] && break
 		file_contains_restartable_rsync_error $rsync_output || exit 1
