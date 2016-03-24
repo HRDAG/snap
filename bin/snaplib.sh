@@ -90,7 +90,7 @@ run_cmd() {
 warn () { echo -e "\n$our_name: $*\n" >&2; have_cmd log && log "$@";return 1; }
 error() { warn "$*"; exit 1; }
 
-cd_() { cd "$@" || error "cd => $?"; }
+cd_() { cd "$@" || error "cd => $?"; [[ $Run ]] && echo "cd $*"; }
 
 # ----------------------------------------------------------------------------
 

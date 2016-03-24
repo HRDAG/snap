@@ -93,7 +93,7 @@ fi
 log "+ $SSH_ORIGINAL_COMMAND"
 
 case $SSH_ORIGINAL_COMMAND in
-  ( "{local} fix" )	is_rsync=$false ;;
+  ( "{local} fix"* )	is_rsync=$false ;;
   ( *[^-=._a-zA-Z0-9/\ *]* ) # optional, for globbing: {,} [^\]
 		error    "illegal character(s): $SSH_ORIGINAL_COMMAND" ;;
   ( *..* )      error    "can't use .. in path: $SSH_ORIGINAL_COMMAND" ;;
@@ -231,6 +231,74 @@ rsync_cmd() {
 	rm $lock
 }
 
+# ----------------------------------------------------------------------------
+# fixit code
+# ----------------------------------------------------------------------------
+
+header() { echo -e "\n==> $* <=="; }
+
+set_next_snapshot() {
+	local snapshot=$1
+
+	declare -i rev=${snapshot#s}
+	declare -i next_rev=rev+1
+	next_snapshot=s$next_rev
+}
+
+declare -i file_seconds
+set_file_seconds() {
+	local snapshot=$1
+
+	local file=$snapshot/.snap/push.log
+	file_seconds=$(date --reference="$file" '+%s')
+	(( $file_seconds )) || error "couldn't get date on $PWD/$file"
+}
+
+fix_push_log() {
+	local project=$1
+
+	header $project
+	cd_  $original_dir/$project
+	project=$(basename $project)
+	local lock=.lock
+	$Run lockpid $lock || error "restart at $project"
+	local head_snapshot=$(readlink HEAD)
+	set_next_snapshot  $head_snapshot
+	local new_snapshot=$next_snapshot
+	$Run cp -al $head_snapshot $new_snapshot
+	[[ $Run ]] && new_snapshot=$head_snapshot
+
+	# this is the guts, the rest is overhead
+	local head_log=$new_snapshot/.snap/push.log
+	declare -i log_seconds file_seconds
+	while read record
+	    do	local snapshot=${record%% |*}
+		snapshot=${snapshot#$project/}
+		local timestamp=$(echo "$record" | cut -d'|' -f3)
+		log_seconds=$(date --date="$timestamp" '+%s')
+		set_file_seconds $snapshot
+		next_snapshot=
+		declare -i time_diff=file_seconds-log_seconds
+		# snap's update_log creates log timestamp then appends it
+		until (( 0 <= $time_diff && $time_diff <= 2 ))
+		   do	[[ ! $next_snapshot ]] || 
+			   warn "unknown: $record" || break
+			set_next_snapshot $snapshot
+			set_file_seconds $next_snapshot
+			time_diff=file_seconds-log_seconds
+		done
+		[[ $next_snapshot ]] && 
+		   record=${record/$snapshot/$next_snapshot}
+		echo "$record"
+	done <  $head_log > $head_log.new &&
+	$Run mv $head_log.new $head_log &&
+
+	$Run rm HEAD && $Run ln -s $new_snapshot HEAD
+	$Run rm $lock
+}
+
+# ----------------------------------------------------------------------------
+
 snap_cmd() {
 
 	set -- $SSH_ORIGINAL_COMMAND
@@ -265,9 +333,21 @@ snap_cmd() {
 		run_cmd $action "$@" ;;
 	   ( fix )			# only for a repo hacker to run locally
 		cd_ $original_dir
+		[[ $* != *[^-\ a-zA-Z]* ]] ||
+		   error "illegal character in args: $*"
+		for project in ${*:-[A-Z]*}
+		    do	project=${project%/HEAD}
+			[[ $(basename $project) == [A-Z]* ]] ||
+			   error "project(s)"
+			[[ -d $project/HEAD ]] || continue
+			fix_push_log $project			
+		done ;;
+	   ( fix )			# only for a repo hacker to run locally
+		error "this was done in 2015"
+		cd_ $original_dir
 		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z]/s[0-9]+$ ]] ||
 		   error "need to be in a snapshot"
-		write_metadata ;;
+		write_metadata ;;	# repo versions, user won't over-write
 	esac
 }
 
