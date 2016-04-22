@@ -249,6 +249,7 @@ write_metadata() {
 	# the -path arg & -name patterns are duplicated in rsync_client_opts
 	find * \( -type f -o -type l \) \
 	     ! -path "$rsync_output*"   ! -name .DS_Store \
+	     ! -name '.~lock.*#' \
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
 	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
 	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"
