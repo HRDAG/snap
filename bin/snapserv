@@ -342,8 +342,7 @@ snap_cmd() {
 			[[ -d $project/HEAD ]] || continue
 			fix_push_log $project			
 		done ;;
-	   ( fix )			# only for a repo hacker to run locally
-		error "this was done in 2015"
+	   ( write*metadata )	       # only for a repo hacker to run locally
 		cd_ $original_dir
 		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z]/s[0-9]+$ ]] ||
 		   error "need to be in a snapshot"
