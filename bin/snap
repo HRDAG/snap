@@ -465,7 +465,9 @@ snap_push() {
 	[[ -s $rsync_output ]] && mv $rsync_output $rsync_output.old
 	while true
 	   do	# pipeline runs rsync in separate process: ok if exits on error
-		run_rsync_cmd --delete --relative --exclude=.snap/revision \
+		run_rsync_cmd --delete --relative \
+			      --exclude=.snap/revision \
+			      --exclude=.snap/files-repo* \
 				  $paths_to_delete $snappable_dirs \
 				  $snap_host:$project/ 2>&1 |
 		   tee $rsync_output | fgrep -v ' (0B -> '
