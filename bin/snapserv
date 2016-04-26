@@ -93,7 +93,8 @@ fi
 log "+ $SSH_ORIGINAL_COMMAND"
 
 case $SSH_ORIGINAL_COMMAND in
-  ( "{local} fix"* )	is_rsync=$false ;;
+  ( "{local} fix"*   )	is_rsync=$false ;;
+  ( "{local} write"* )	is_rsync=$false ;;
   ( *[^-=._a-zA-Z0-9/\ *]* ) # optional, for globbing: {,} [^\]
 		error    "illegal character(s): $SSH_ORIGINAL_COMMAND" ;;
   ( *..* )      error    "can't use .. in path: $SSH_ORIGINAL_COMMAND" ;;
