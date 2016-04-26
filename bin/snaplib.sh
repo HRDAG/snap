@@ -231,6 +231,11 @@ compute_metadata() {
 
 # -------------------------------------------------------
 
+if have_cmd shasum
+   then readonly sha_cmd=shasum
+   else readonly sha_cmd=sha1sum
+fi
+
 write_metadata() {
 
 	if [[ $our_name != snapserv ]]
@@ -254,14 +259,24 @@ write_metadata() {
 	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
 	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"
 
-	if have_cmd shasum
-	   then local sha_cmd=shasum
-	   else local sha_cmd=sha1sum
-	fi
 	if [[ ! ${Run-} ]]
 	   then cd_ .snap
 		metadata_file=${metadata_file#.snap/}
 		$sha_cmd $metadata_file > $metadata_file.sha1
 		cd_ ..
 	fi
+}
+
+# -------------------------------------------------------
+
+sort_files_in_place() {
+
+	local file
+	for file
+	    do	[[ -s $file ]] || continue
+		[[ $file != *.sha* ]] || continue
+		$Run sort --check  $file && continue
+		$Run sort --output=$file $file || error "$FUNCNAME $file"
+		[[ -e $file.sha1 && ! ${Run-} ]] && $sha_cmd $file > $file.sha1
+	done
 }

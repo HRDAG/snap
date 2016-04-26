@@ -155,10 +155,10 @@ to RStudio or Jupyter Notebook services, since they'll all be killed"
 is_workspace_modified() {
 
 	write_metadata			# caller expects this always happens
-	[[ -s .snap/files-repo.sha1 ]] || return 0
-	# are the sha1 checksums different?
-	(( $(sed 's/ .*//' .snap/files-{repo,local}.sha1 |
-	       uniq | wc -l) != 1 ))
+	[[ -s  .snap/files-repo ]] || return 0 # this might be the first push
+	set -- .snap/files-{repo,local}
+	sort_files_in_place $*
+	! cmp --quiet $*
 }
 
 # ----------------------------------------------------------------------------
@@ -251,6 +251,7 @@ modified_paths() {
 	local src=${1:-.snap/files-repo} dst=${2:-.snap/files-local}
 
 	write_metadata
+	sort_files_in_place $src $dst
 	diff --unified=0 $src $dst | sed -n '/^+[^+]/s/^.//p' | files_to_paths
 }
 
@@ -290,7 +291,8 @@ snap_pull() {
 	local old_repo_files=$tmp_1 our_modified=$tmp_2 HEAD_modified=$tmp_3
 	local deleted_paths=$tmp_4 spurious_paths=$tmp_5
 	if [[ -s .snap/files-repo && ! $is_internal ]]
-	   then run_cmd cp .snap/files-repo $old_repo_files
+	   then sort_files_in_place .snap/files-repo
+		run_cmd cp .snap/files-repo $old_repo_files
 	   else run_cmd cp /dev/null        $old_repo_files
 	fi
 	run_cmd cp /dev/null $our_modified
@@ -313,6 +315,7 @@ snap_pull() {
 	run_rsync_cmd $_rsync_opts $snap_host:$snapshot/ $dst/ 2>&1 |
 	   tee $rsync_output
 	cd_ $dst
+	sort_files_in_place .snap/files-*
 	[[ -s .snap/files-pre-push ]] ||
 	   run_cmd cp .snap/files-repo .snap/files-pre-push
 
@@ -439,7 +442,7 @@ snap_push() {
 
 	# is_workspace_modified runs write_metadata, writes .snap/files-local
 	if ! is_workspace_modified && [[ $(ssh_snap_q ls $project/HEAD) ]]
-	   then echo "no local changes"
+	   then echo "No local changes, no push needed."
 		return 1
 	fi
 
@@ -450,6 +453,7 @@ snap_push() {
 	run_cmd chmod -R ug+rwX $snappable_dirs
 
 	local paths_to_delete=.snap/paths-to-delete # snapserv uses this file
+	sort_files_in_place .snap/files-*
 	if [[ -s .snap/files-pre-push ]]
 	   then local before_paths=$tmp_1
 		# I'm not sure we need both these files
@@ -524,6 +528,7 @@ snap_stat() {
 	[[ $project ]] || error "need to be in a data project"
 
 	write_metadata
+	sort_files_in_place .snap/files-*
 	diff --unified=0 "$@" .snap/files-repo .snap/files-local &&
 	   echo "No changes (local files not changed since pulled from repo)."
 }
