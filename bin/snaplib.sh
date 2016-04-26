@@ -20,9 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.19		     # must have three segments (Version_required also)
+Version=0.2.20		     # sort .snap/files-* just before we use them
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
+Version_required=0.2.20	     # sort .snap/files-* just before we use them
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
