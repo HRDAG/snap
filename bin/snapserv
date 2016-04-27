@@ -192,15 +192,29 @@ rsync_cmd() {
 	run_cmd mkdir -p $my_new_head/.snap # .snap needed for first push (?)
 	cd_ $my_new_head
 
-	declare -i snapshots_used=0
+	declare -i snapshots_used=0 snapshot_num my_snapshot_num=0
 	link_dest_opts=
+	# we can't hard-link a symlink owned by a different user, so the
+	# first snapshot checked should be the latest one created by this user.
 	for ((  snapshot_num=$head_num; $snapshot_num > 0; snapshot_num-=1 ))
 	    do	snapshot=../s$snapshot_num
 		[[ -d $snapshot ]] || continue
+		set -- $(ls -ldn $snapshot)
+		[[ $3 == $UID ]] || continue
+		link_dest_opts="--link-dest=$snapshot"
+		snapshots_used+=1
+		my_snapshot_num=$snapshot_num
+		break
+	done
+	for ((  snapshot_num=$head_num; $snapshot_num > 0; snapshot_num-=1 ))
+	    do	snapshot=../s$snapshot_num
+		[[ -d $snapshot ]] || continue
+		(( $my_snapshot_num == $snapshot_num )) && continue
 		link_dest_opts="$link_dest_opts --link-dest=$snapshot"
 		   snapshots_used+=1
 		(( snapshots_used < max_snapshots_to_check )) || break
 	done
+	# log $link_dest_opts
 
 	# copy the client's data into our current (user-private) directory;
 	# no matter what the sender says, enforce the perms we want.

@@ -113,6 +113,7 @@ cd___source_config___set_project__local_rev__rsync_opts__snap_host() {
 		return 1
 	done
 
+	[[ $PWD != */snap ]] || error "must run $our_name in a data project"
 	convert_snap_metadata
 
 	local dir
