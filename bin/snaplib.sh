@@ -50,7 +50,7 @@ readonly rsync_client_opts="--verbose --partial
 	   --exclude=*~ --exclude=#*# --exclude=.#*"
 # --server options that correspond to client's use of $rsync_opts;
 #    -O is not used when --sender
-readonly rsync_server_opts="-vlOHtrSe.iLs --partial"
+readonly rsync_server_opts="-vlOHtrSe.is --partial"
 
 readonly snappable_subdirs="input output frozen"
 
