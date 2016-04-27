@@ -466,6 +466,8 @@ snap_push() {
 	fi >  $paths_to_delete
 	[[ -s $paths_to_delete ]] || paths_to_delete=
 
+	local failed_to_hard_link_RE='rsync: failed to hard-link .* (1) *$'
+	local failure_summary_RE=' (code 23) at \| => 23 *$'
 	[[ -s $rsync_output ]] && mv $rsync_output $rsync_output.old
 	while true
 	   do	# pipeline runs rsync in separate process: ok if exits on error
@@ -474,12 +476,42 @@ snap_push() {
 			      --exclude=.snap/files-repo* \
 				  $paths_to_delete $snappable_dirs \
 				  $snap_host:$project/ 2>&1 |
-		   tee $rsync_output | fgrep -v ' (0B -> '
+		   tee $rsync_output |
+		   # don't show unchanged files (i.e. sent 0 bytes).
+		   # can't hard-link a symlink we don't own; later, we'll
+		   #    check to make sure the errors involve symlinks
+		   grep -v -e ' (0B -> ' \
+			   -e "$failed_to_hard_link_RE" \
+			   -e "$failure_summary_RE"
 		local status=${PIPESTATUS[0]} # rsync's exit status
 		[[ $status == 0 ]] && break
-		file_contains_restartable_rsync_error $rsync_output || exit 1
-		warn "rsync exited with $status, continuing where left off"
+		file_contains_restartable_rsync_error $rsync_output &&
+		 { warn "rsync exited with $status, continuing where left off";
+		   continue; }
+		# if hard-link errors, break to show any that aren't symlinks
+		grep --quiet "$failed_to_hard_link_RE" $rsync_output &&
+		   break || exit 1
 	done
+
+	# if we had hard-link errors, make sure they were all symlinks
+	local  failed_to_hard_link_errors=$tmp_2
+	grep "$failed_to_hard_link_RE" $rsync_output > \
+	      $failed_to_hard_link_errors
+	local found_non_symlink_error=$false
+	local line
+	while read line
+	   do	# error msg: rsync: failed to hard-link ../s*/* with *: * (1)
+		local local_file=$(echo "$line" | sed 's/.* with //; s/: .*//')
+		[[ -L "$local_file" ]] && continue
+		echo "$line"
+		found_non_symlink_error=$true
+	done < $failed_to_hard_link_errors
+	if [[ $found_non_symlink_error ]]
+	   then grep "failure_summary_RE" $rsync_output
+		[[ $status == 0 ]] ||
+		   error "Permission problem on server, contact $maintainer"
+	fi
+
 	run_cmd cp .snap/files-local .snap/files-pre-push
 
 	snap_pull -i 2>&1 |		# grab the new snapshot's .snap/* files
