@@ -33,8 +33,12 @@ umask 02			   # we use group permissions in data projects
 
 case ${SSH_ORIGINAL_COMMAND-} in
    ( 'snap '* | 'rsync --server '* )	# these patterns duplicated in snapserv
+	if [[ $LOGNAME == scott ]]
+	   then snapserv_cmd=$HOME/git/snap/bin/snapserv
+	   else snapserv_cmd=/usr/local/bin/snapserv
+	fi
 	# can add -t option, to output "set -x" to ~snap/.snapserv.log.dbg
-	exec /usr/local/bin/snapserv ${snapserv_opts-} $SSH_ORIGINAL_COMMAND
+	exec $snapserv_cmd ${snapserv_opts-} $SSH_ORIGINAL_COMMAND
 	exit 1 ;;
    ( svnserve* )
 	exec /usr/bin/svnserve --tunnel --log-file $svn_log \
