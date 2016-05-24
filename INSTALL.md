@@ -55,7 +55,7 @@ to your ~/.bash_profile, and then running `source ~/.bash_profile`.
 
 Either way, you can make sure snap is in your PATH by running:
 
-	which snap
+	snap -h
 
 
 ## 4) Configure `~/.ssh/config`
