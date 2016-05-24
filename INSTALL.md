@@ -14,7 +14,7 @@ and especially follow the instructions in the "SSH stuff" section.
 
 ## 1) Define your `git` path
 
-You need to make sure you have defined HRDAG_GIT_HOME in your ~/.bash_profile.  For example, you would add this line:
+You need to make sure you have defined HRDAG_GIT_HOME in your ~/.bash_profile.  For example, you would copy-and-paste this line:
 
 	export HRDAG_GIT_HOME=~/git
 
