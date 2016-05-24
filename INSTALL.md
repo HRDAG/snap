@@ -1,51 +1,85 @@
 # Install snap[^1]
-Snap is short for snapshot 
+
+`snap` is short for snapshot
 
 This file describes how to install and use snap (and should eventually describe how to install snapserv).
 
-## 1) Define your GIT path
+## 0) Working with HRDAG snap repository
 
-You need to make sure you have defined $HRDAG_GIT_HOME in your ~/.bash_profile. 
+If you'll be accessing the HRDAG snap repository, you should first read:
 
-For example this could be:
+	https://github.com/HRDAG/resource-utils/blob/master/faqs/data-hacking-on-server.md
 
-	export HRDAG_GIT_HOME=$HOME/GIT
+and especially follow the instructions in the "SSH stuff" section.
+
+## 1) Define your `git` path
+
+You need to make sure you have defined HRDAG_GIT_HOME in your ~/.bash_profile.  For example, you would add this line:
+
+	export HRDAG_GIT_HOME=~/git
+
+if you created your git workspace by running a command like:
+
+	mkdir -p ~/git
+
+Afterwards, add HRDAG_GIT_HOME to your shell's environment by running the command:
+
+	source ~/.bash_profile
 
 
-Next, you need to add snap to your path in your ~/.bash_profile. For example:
+## 2) Clone snap tree to your laptop
+
+	cd $HRDAG_GIT_HOME
+	git clone git@github.com:HRDAG/snap.git
+
+
+## 3) Make it easy to run snap on your laptop
+
+You want to make it easy to run snap on your laptop (you do _not_ need to do this setup on HRDAG's snap server, it always has the latest version in everyone's PATH).
+
+A good way is to "put" snap in your personal bin directory, by running:
+
+	ln -sf ~/git/snap/bin/snap ~/bin/
+
+and then making sure that your ~/.bash_profile contains a line like:
+
+	PATH=~/bin:$PATH
+
+and that you ran `source ~/.bash_profile` after adding that line.
+
+If you don't want to have a personal `bin` directory, you can add snap to your PATH by adding a line like:
 
 	PATH=$PATH:$HRDAG_GIT_HOME/snap/bin
 
-## 2) Clone snap tree
+to your ~/.bash_profile, and then running `source ~/.bash_profile`.
 
-	 cd "$HRDAG_GIT_HOME" 
- 	 git clone git@github.com:HRDAG/snap.git
+Either way, you can make sure snap is in your PATH by running:
+
+	which snap
 
 
-## 3) set .gitignore
+## 4) Configure `~/.ssh/config`
 
-Before you use snap in a new project tree, make sure you have told .gitignore **not** to sync input/ and output/ - these should go into snap, not into git. For example, the SY tree currently has the following .gitignore:
+You need to add the line:
 
-	## files to be ignored in SY tree (ARG 2014-11-05)
-	# ignore tmp files
-	\~*
-	*~
+	SendEnv HRDAG_SNAP_VERSION
 
-	.Rhistory
+to the `Host *` stanza in your `~/.ssh/config` file, or else to the stanza of any server that hosts a snap repository.
 
-	# ignore snap metadata
-	.snap*
 
-	# ignore the data directories
+## 5) snap alters .gitignore
+
+The first time you run snap in a project tree, it will append the following lines to that project's .gitignore file:
+
 	input/
 	output/
 	frozen/
- 
-Now that you've set .gitignore these folders and files won't be included in any syncs with Github, so you don't have to worry about them anymore.
- 
-Confirm with git that the input/ and output/ are not in github's repo. You can look at the github repo through the web interface. 
- 
-### you're good to go. If you're looking for info on snap semantics, have a look at the README
+
+to make sure that the directories saved in the snap repository aren't also saved in git.
+
+## You're good to go!
+
+If you're looking for info on snap semantics, have a look at the README
 
 
 
