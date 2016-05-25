@@ -359,7 +359,8 @@ snap_cmd() {
 		done ;;
 	   ( write*metadata )	       # only for a repo hacker to run locally
 		cd_ $original_dir
-		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z]/s[0-9]+$ ]] ||
+		[[ $PWD == */.snap ]] && cd_ ..
+		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z][^/]*/s[0-9]+$ ]] ||
 		   error "need to be in a snapshot"
 		write_metadata ;;	# repo versions, user won't over-write
 	esac
