@@ -590,12 +590,15 @@ snap_log () {				# new way
 	if ! is_head
 	   then $Run rsync $rsync_opts --quiet \
 			   $snap_host:$_project/HEAD/.snap/push.log .snap/
-		local rev=$(< .snap/revision)
-		warn "your last pull was $rev, your workspace is out-of-date"
+		local old_rev=$(< .snap/revision)
+	   else local old_rev=
 	fi
 
 	# reversed_lines .snap/push.log	# show newest log records first
 	cat .snap/push.log		# show oldest first, in case too many
+
+	[[ $old_rev ]] &&
+	   warn "your last pull was $old_rev, your workspace is out-of-date"
 
 	[[ $(tail -n1 .snap/push.log) == "$head_rev "* ]] && return
 return	     # must first fix push.log records by incrementing revision # 
