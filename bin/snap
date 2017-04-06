@@ -400,7 +400,8 @@ update_log() {
 	local   _date=$(date -u '+%F %T UTC (%a)')
 	local  record="$rev | $LOGNAME | $_date | ${comment:---}"
 	echo "$record" >> .snap/push.log &&
-	$Run rsync $rsync_opts -q .snap/push.log $snap_host:$project/HEAD/.snap/
+	$Run \
+	rsync $rsync_opts -q .snap/push.log $snap_host:$project/HEAD/.snap/
 }
 
 # --------------------------------------------

@@ -90,7 +90,11 @@ run_cmd() {
 	error "$* => $status"
 }
 
-warn () { echo -e "\n$our_name: $*\n" >&2; have_cmd log && log "$@";return 1; }
+warn () {
+	echo -e "\n$our_name: $*\n" >&2
+	[[ $is_snapserv ]] && log "$@"
+	return 1
+}
 error() { warn "$*"; exit 1; }
 
 cd_() { cd "$@" || error "cd => $?"; [[ $Run ]] && echo "cd $*"; }
