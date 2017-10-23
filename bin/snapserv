@@ -189,6 +189,7 @@ rsync_cmd() {
 
 	rm -rf $new_head HEAD.*		# could have old, failed attempt
 
+	chmod g+s .
 	run_cmd mkdir -p $my_new_head/.snap # .snap needed for first push (?)
 	cd_ $my_new_head
 
@@ -230,6 +231,7 @@ rsync_cmd() {
 		find * -depth -type d -print0 |
 		xargs --null --no-run-if-empty rmdir --ignore-fail-on-non-empty
 	fi
+	chmod -R ug+rwX,o+rX,o-w .
 	write_metadata
 	cd_ ..
 
