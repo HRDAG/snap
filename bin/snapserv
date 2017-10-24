@@ -231,7 +231,8 @@ rsync_cmd() {
 		find * -depth -type d -print0 |
 		xargs --null --no-run-if-empty rmdir --ignore-fail-on-non-empty
 	fi
-	chmod -R ug+rwX,o+rX,o-w .
+	# --silent cuz rsync can hard-link a file from another user's shapshot
+	chmod -R --silent ug+rwX,o+rX,o-w . # some user's perms are messed up
 	write_metadata
 	cd_ ..
 
