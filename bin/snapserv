@@ -143,6 +143,11 @@ so he can debug your problem."
 	exit 1
 }
 
+fix_perms_on_pushed_files() {
+	# --silent cuz rsync can hard-link a file from another user's shapshot
+	chmod --recursive --silent ug+rwX,o+rX,o-w "$@"
+}
+
 rsync_cmd() {
 
 	data_dir=${SSH_ORIGINAL_COMMAND##* }
@@ -154,8 +159,11 @@ rsync_cmd() {
 	   then exec rsync --server --sender $rsync_opts . $data_dir
 		error "exec rsync => $?"
 	elif [[ $SSH_ORIGINAL_COMMAND == */HEAD/.snap/ ]] # writing push.log?
-	   then exec rsync --server $rsync_opts . $data_dir
-		error "exec rsync => $?"
+	   then rsync --server $rsync_opts . $data_dir
+		local status=$?
+		fix_perms_on_pushed_files $data_dir
+		[[ $status == 0 ]] && exit 0
+		error "exec rsync => $status"
 	fi
 
 	data_dir=${data_dir%/}
@@ -220,7 +228,7 @@ rsync_cmd() {
 	# copy the client's data into our current (user-private) directory;
 	# no matter what the sender says, enforce the perms we want.
 	run_cmd rsync --server $rsync_opts $link_dest_opts \
-		      --perms --chmod=Dg+s,ug+w,o-w,+X \
+		      --perms --chmod=Dg+s,ug+rw,o-w,+X \
 		      --relative --delete . .
 	rm -f .snap/revision && echo "$project/$new_head" > .snap/revision ||
 	   error "snap repo full, or out of inodes??"
@@ -231,9 +239,8 @@ rsync_cmd() {
 		find * -depth -type d -print0 |
 		xargs --null --no-run-if-empty rmdir --ignore-fail-on-non-empty
 	fi
-	# --silent cuz rsync can hard-link a file from another user's shapshot
-	chmod -R --silent ug+rwX,o+rX,o-w . # some user's perms are messed up
 	write_metadata
+	fix_perms_on_pushed_files .
 	cd_ ..
 
 	run_cmd mv $my_new_head $new_head
