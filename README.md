@@ -17,7 +17,7 @@ project. Git is bad at keeping data files for the following reasons:
 
 
 
-# A bit more detail.[^1]
+# A bit more detail.<sup>[1](#1)</sup>
 **snap** is short for "snapshot." The point of snap is to separate the version control of data from source code. Version control systems are not good at handling big files (i.e., >1MB), so we don't keep them on github. Furthermore, much of our data is confidential, and we don't want to put it on a github server. Using snap for data, and github for code, we are able to segregate most (maybe all) of the actual data so it continues to live on our server 'eleanor' at HRDAG (maintained by Scott and Patrick) rather than in git.  To see the location of the snap server, run `snap origin` (which also shows you the files in which the `snap_host` variable can be set).
 
 
@@ -87,4 +87,4 @@ You can check out specific versions of the data. For example, after looking at `
 
 
 
-[^1]: ARG: The info here builds on an email from PB (2. Nov 2014) so that others can install and use snap. If anything is missing, feel free to add and expand. Note that README.md has more details about semantics and why we’re using snap.
+<sup><a name="1">1</a></sup> ARG: The info here builds on an email from PB (2. Nov 2014) so that others can install and use snap. If anything is missing, feel free to add and expand. Note that README.md has more details about semantics and why we’re using snap.
