@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.2.22		     # show "workspace out-of-date" warning at end
+Version=0.3.1		     # snapserv now fixes file perms after a push
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
