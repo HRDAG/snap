@@ -33,7 +33,7 @@ Usage: $our_name [options] action [args]
    Current actions are:
       origin: show server (and optional account) used to store snapshots
       pull [snapshot]: pull project snapshot (defaults to HEAD)
-      push [-m msg|-F msg-file] [tag]: push workspace, then optionally tag
+      push {-m msg|-F msg-file} [tag]: push workspace, then optionally tag
       stat [diff-opts]: show status of added/deleted/modified files
       tag  [snapshot] tag-name: tag snapshot (defaults to HEAD)
       tags [project]: show all tags , defaults to workspace project
@@ -377,15 +377,17 @@ set_comment() {
 	if [[ ${1-} != -* ]]
 	   then [[ ${1-} != *' '* ]] ||
 		   error "argument contains spaces; did you forget -m ?"
-		return 1
+		error "use -m or -F to specify a commit message (-h for help)"
 	fi
 	if   [[ $1 == -m ]]
 	   then comment=${2-}
 		[[ $comment ]] || error "-m needs a string"
 	elif [[ $1 == -F ]]
 	   then local file=${2-}
-		[[ $file && -s $file ]] || error "-F needs a file"
+		[[ $file && -s $file ]] || error "-F needs a file that exists"
 		comment=$(< $file)
+	elif [[ $1 == -h ]]
+	   then print_or_egrep_Usage_then_exit push
 	   else error "$1 is unrecognized option"
 	fi
 	# each log record is a single line

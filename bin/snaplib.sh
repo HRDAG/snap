@@ -26,6 +26,7 @@ Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
 Version_required=0.2.21	     # can't hard-link snapshot not owned by us
 Version_required=0.2.22	     # show "workspace out-of-date" warning at end
+Version_required=0.3.1	     # 'snap push' now requires a commit message
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
