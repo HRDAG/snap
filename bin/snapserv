@@ -197,7 +197,7 @@ rsync_cmd() {
 
 	rm -rf $new_head HEAD.*		# could have old, failed attempt
 
-	chmod g+s .
+	chmod --silent g+s .	 # not sure why this can fail (on empty repo)
 	run_cmd mkdir -p $my_new_head/.snap # .snap needed for first push (?)
 	cd_ $my_new_head
 
@@ -355,7 +355,7 @@ snap_cmd() {
 		run_cmd $action "$@" ;;
 	   ( du | ls | cat | head | tail )
 		[[ $action == ls ]] && set -- $ls_opts "$@"
-		run_cmd $action "$@" ;;
+		$action "$@" ;;
 	   ( fix )			# only for a repo hacker to run locally
 		cd_ $original_dir
 		[[ $* != *[^-\ a-zA-Z]* ]] ||
