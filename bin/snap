@@ -242,7 +242,8 @@ snap_origin() {
 files_to_paths() {
 	local metadata_file=${1-}	# written by write_metadata
 
-	# handle SPACEs in filenames
+	# pull out filename carefully, could be spaces in filename
+	#   (2nd expression breaks if filename contains a pair of spaces)
 	sed -n '/ -> /s/ -> .*//p; / UTC$/s/  .*//p' $metadata_file
 }
 
