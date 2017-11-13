@@ -244,7 +244,8 @@ files_to_paths() {
 
 	# pull out filename carefully, could be spaces in filename
 	#   (2nd expression breaks if filename contains a pair of spaces)
-	sed -n '/ -> /s/ -> .*//p; / UTC$/s/  .*//p' $metadata_file
+	# 'sort' is used because files are sometimes mis-sorted
+	sed -n '/ -> /s/ -> .*//p; / UTC$/s/  .*//p' $metadata_file | sort
 }
 
 # ---------------------------------
