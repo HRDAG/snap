@@ -26,7 +26,7 @@ if [[ -s /etc/snapserv.sh ]]
    else snap_host=$default_snap_host
 fi
 
-# ls less useful: du shows non-empty repos, log has details of snapshots
+# 'ls' less useful (du shows non-empty repos, log has details of snapshots):
 #      ls   [project]: show repos [or our snapshots]; many repos are empty ...
 Usage="
 Usage: $our_name [options] action [args]
