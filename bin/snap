@@ -297,7 +297,7 @@ snap_pull() {
 	   run_cmd mkdir -p $_project
 
 	local old_repo_files=$tmp_1 our_modified=$tmp_2 HEAD_modified=$tmp_3
-	local deleted_paths=$tmp_4 spurious_paths=$tmp_5
+	local deleted_paths=$tmp_4 spurious_paths=$tmp_5 spurious_dirs=$tmp_6
 	if [[ -s .snap/files-repo && ! $is_internal ]]
 	   then sort_files_in_place .snap/files-repo
 		run_cmd cp .snap/files-repo $old_repo_files
@@ -336,23 +336,25 @@ snap_pull() {
 	files_to_paths .snap/files-local | # ignore files we don't have ...
 	  comm -12 $deleted_paths - > $spurious_paths
 	if [[ -s $spurious_paths ]]
-	   then local dirs=$(sed 's@/[^/]*$@@' $spurious_paths | sort -u)
-		set -- $(echo $dirs | tr ' ' '\n' | sed 's@/.*$@@' | uniq)
+	   then sed 's@/[^/]*$@@' $spurious_paths | sort -u > $spurious_dirs
+		set -- $(sed 's@/.*$@@' $spurious_dirs | uniq)
 		local parent_dirs=$*
 		local rm_parents_cmd="find $* -depth -type d -print0 | xargs -0 rmdir >& /dev/null"
-		local ls_dirs="\n$(ls -CdF $dirs | sed 's/^/  /')"
+		local ls_dirs="\n$(tr '\n' '\0' < $spurious_dirs | xargs -0 ls -CdF | sed 's/^/  /')"
 
 		warn "Most/all the files in these directories disappeared (probably from a rename):
 			$ls_dirs"
 		local flag what="to delete such missing files"
 		read -n 1 -e -p "Type 'y' $what: " flag
-		[[ $flag == [yY]* ]] && xargs $Run rm -f < $spurious_paths || {
+		[[ $flag == [yY]* ]] &&
+		tr '\n' '\0' < $spurious_paths | xargs -0 $Run rm -f || {
 		local deletes_file=.snap/deletes-ignored
 		$Run cp $spurious_paths $deletes_file
 		warn "files not deleted; if you change your mind, delete with:
-		cd $PWD
-		xargs rm -f < $deletes_file
-		$rm_parents_cmd
+
+		cd $PWD &&
+		tr '\\\\n' '\\\\0' < $deletes_file | xargs -0 rm -f &&
+		$rm_parents_cmd &&
 		rm $deletes_file"
 		}
 

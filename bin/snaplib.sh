@@ -20,13 +20,14 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.3.1		     # snapserv now fixes file perms after a push
+Version=0.3.2		     # correctly handle directory names with spaces
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
 Version_required=0.2.21	     # can't hard-link snapshot not owned by us
 Version_required=0.2.22	     # show "workspace out-of-date" warning at end
 Version_required=0.3.1	     # 'snap push' now requires a commit message
+Version_required=0.3.2	     # correctly handle directory names with spaces
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
@@ -72,7 +73,8 @@ readonly  tmp_2=$tmpdir/$our_name-2.$$
 readonly  tmp_3=$tmpdir/$our_name-3.$$
 readonly  tmp_4=$tmpdir/$our_name-4.$$
 readonly  tmp_5=$tmpdir/$our_name-5.$$
-readonly  tmp_files="$_tmp $tmp_1 $tmp_2 $tmp_3 $tmp_4 $tmp_5"
+readonly  tmp_6=$tmpdir/$our_name-6.$$
+readonly  tmp_files="$_tmp $tmp_1 $tmp_2 $tmp_3 $tmp_4 $tmp_5 $tmp_6"
 
 readonly date=$(date '+%a %m/%d %X %Z')
 
