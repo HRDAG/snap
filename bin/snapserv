@@ -156,7 +156,8 @@ rsync_cmd() {
 	[[ -d $project ]] || error "project '$project' doesn't exist"
 
 	if   [[ $SSH_ORIGINAL_COMMAND == *' --sender '* ]] # snap pull?
-	   then exec rsync --server --sender $rsync_opts . $data_dir
+	   then abort_if_client_too_old 1m		   # needed fixes?
+		exec rsync --server --sender $rsync_opts . $data_dir
 		error "exec rsync => $?"
 	elif [[ $SSH_ORIGINAL_COMMAND == */HEAD/.snap/ ]] # writing push.log?
 	   then rsync --server $rsync_opts . $data_dir
