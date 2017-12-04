@@ -298,10 +298,9 @@ snap_pull() {
 
 	local ls_err=$tmp_1
 	set_ssh_cmd
-	   $ssh_cmd ls -d $_project 2> /dev/null ||
-		error "project '$_project' doesn't exist"
-	if $ssh_cmd ls -d $snapshot > /dev/null 2> $ls_err
-	   then true
+	if     $ssh_cmd ls -d $snapshot >  /dev/null 2> $ls_err ; then true ;
+	elif ! $ssh_cmd ls -d $_project >& /dev/null
+	   then error "project '$_project' doesn't exist"
 	elif grep -q ': Permission denied$' $ls_err
 	   then error "you don't have access to $_project, ask server operator for permission"
 	elif grep -q ': No such file or directory$' $ls_err
