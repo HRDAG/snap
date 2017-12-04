@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.3.2		     # correctly handle directory names with spaces
+Version=0.4.1		     # catch many errors, abort with user-friendly msg
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
@@ -28,6 +28,7 @@ Version_required=0.2.21	     # can't hard-link snapshot not owned by us
 Version_required=0.2.22	     # show "workspace out-of-date" warning at end
 Version_required=0.3.1	     # 'snap push' now requires a commit message
 Version_required=0.3.2	     # correctly handle directory names with spaces
+Version_required=0.4.1	     # catch many errors, abort with user-friendly msg
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
@@ -261,6 +262,8 @@ write_metadata() {
 	for dir in $snappable_subdirs
 	    do	fgrep_opts="$fgrep_opts -e /$dir/"
 	done
+	set -- *
+	[[ $* != "*" ]] || error "workspace is empty"
 	# the -path arg & -name patterns are duplicated in rsync_client_opts
 	find * \( -type f -o -type l \) \
 	     ! -path "$rsync_output*"   ! -name .DS_Store \
@@ -268,6 +271,7 @@ write_metadata() {
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
 	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
 	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"
+	[[ ${PIPESTATUS[0]} == 0 ]] || error "must first fix the above error"
 
 	if [[ ! ${Run-} ]]
 	   then cd_ .snap

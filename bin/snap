@@ -179,7 +179,9 @@ run_ssh_cmd() {
 	[[ -o xtrace ]] && local xtrace= || local xtrace="set +x"
 	$Trace
 	$Run $ssh_cmd "$@" || error "$ssh_cmd $* => $?"
+	local status=${PIPESTATUS[0]}
 	$xtrace
+	return $status
 }
 
 # -------------------------------------------------------
@@ -293,6 +295,25 @@ snap_pull() {
 	   else local snapshot=$_project/HEAD
 	fi
 	_project=${_project%/*}
+
+	local ls_err=$tmp_1
+	set_ssh_cmd
+	   $ssh_cmd ls -d $_project 2> /dev/null ||
+		error "project '$_project' doesn't exist"
+	if $ssh_cmd ls -d $snapshot > /dev/null 2> $ls_err
+	   then true
+	elif grep -q ': Permission denied$' $ls_err
+	   then error "you don't have access to $_project, ask server operator for permission"
+	elif grep -q ': No such file or directory$' $ls_err
+	   then if [[ $snapshot == */HEAD ]]
+		   then error "$_project is empty, someone must 'push'"
+		elif [[ $snapshot == */s[0-9]* ]]
+		   then local type=snapshot
+		   else local type=tag
+		fi
+		error "$type '$snapshot' doesn't exist"
+	fi
+
 	[[ ${1-} && $(basename $PWD) != $_project ]] &&
 	   run_cmd mkdir -p $_project
 
@@ -421,7 +442,9 @@ is_head() {
 
 	local err=$tmp_5
 	set_ssh_cmd
-	head_rev=$($ssh_cmd cat $project/HEAD/.snap/revision 2>$err) #globl
+	head_rev=$($ssh_cmd cat $project/HEAD/.snap/revision 2>$err) # global
+	egrep --quiet ': Permission denied$' $err &&
+	   error "you don't have access to $project, ask server operator for permission"
 	egrep -v ': No such file or directory$' $err # OK if cat fails
 	egrep --quiet snapserv: $err && exit 1	     # snapserv error?
 	[[ ! $head_rev && $local_rev ]] && error "missing $project/HEAD ?"
@@ -456,7 +479,7 @@ snap_push() {
 
 	# is_workspace_modified runs write_metadata, writes .snap/files-local
 	if ! is_workspace_modified && [[ $(ssh_snap_q ls $project/HEAD) ]]
-	   then echo "No local changes, no push needed."
+	   then echo "No local changes, no 'push' needed."
 		return 1
 	fi
 
