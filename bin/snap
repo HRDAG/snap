@@ -474,6 +474,8 @@ snap_push() {
 	[[ $# == [01] ]] || error "[-m msg|-F msg-file] [tag]"
 	local tag=${1-}
 
+	abort_if_bad_tag_name $tag
+
 	[[ $project ]] || error "can only 'push' when inside a project"
 
 	# is_workspace_modified runs write_metadata, writes .snap/files-local
@@ -566,6 +568,19 @@ snap_push() {
 
 # ----------------------------------------------------------------------------
 
+abort_if_bad_tag_name() {
+	local tag_name=${1-}
+
+	case $tag_name in
+	   (		 HEAD* ) error   "HEAD* is disallowed for tag names" ;;
+	   (           s[0-9]* ) error "s[0-9]* is disallowed for tag names" ;;
+	   (     [^a-zA-Z0-9]* ) error "start tag-name with alphanumeric"    ;;
+	   ( *[^-._a-zA-Z0-9]* ) error "make tag-name with alphanum & '-._'" ;;
+	esac
+}
+
+# ---------------------------------
+
 snap_tag() {
 	[[ $# == [12] ]] || error "[snapshot] tag-name"
 	if [[ $# == 2 ]]
@@ -581,11 +596,7 @@ snap_tag() {
 	[[ $target == */s[1-9]* && $target != */*/* ]] ||
 	    error "illegal snapshot target: $target"
 
-	case $tag_name in
-	   ( HEAD*  |  s[0-9]* ) error "tag-name '$tag_name' is illegal"  ;;
-	   (     [^a-zA-Z0-9]* ) error "start tag-name with alphanumeric" ;;
-	   ( *[^-._a-zA-Z0-9]* ) error "illegal character in tag-name"    ;;
-	esac
+	abort_if_bad_tag_name $tag_name
 
 	run_ssh_cmd  ln -s $target $tag_name
 	echo "$tag_name -> $target"
