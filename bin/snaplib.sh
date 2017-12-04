@@ -2,7 +2,7 @@
 
 #     snap is a utility to store some directories on a server, versioned.
 #
-# Copyright (C) 2014-2016, Human Rights Data Analysis Group (HRDAG)
+# Copyright (C) 2014-2017, Human Rights Data Analysis Group (HRDAG)
 #     https://hrdag.org
 #
 # This file is part of snap.
@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.4.2		     # be stricter with allowed tag names
+Version=0.4.3		     # update copyright dates
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
@@ -30,6 +30,7 @@ Version_required=0.3.1	     # 'snap push' now requires a commit message
 Version_required=0.3.2	     # correctly handle directory names with spaces
 Version_required=0.4.1	     # catch many errors, abort with user-friendly msg
 Version_required=0.4.2	     # be stricter with allowed tag names
+Version_required=0.4.3	     # update copyright dates
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
