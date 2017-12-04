@@ -580,10 +580,11 @@ snap_tag() {
 	# these tests are duplicated in snap_cmd in snapserv
 	[[ $target == */s[1-9]* && $target != */*/* ]] ||
 	    error "illegal snapshot target: $target"
+
 	case $tag_name in
-	   ( HEAD | HEAD.* | s[1-9]* ) error "tag-name $tag_name is reserved";;
+	   ( HEAD*  |  s[0-9]* ) error "tag-name '$tag_name' is illegal"  ;;
 	   (     [^a-zA-Z0-9]* ) error "start tag-name with alphanumeric" ;;
-	   ( *[^-._a-zA-Z0-9]* ) error "illegal charater in tag-name" ;;
+	   ( *[^-._a-zA-Z0-9]* ) error "illegal character in tag-name"    ;;
 	esac
 
 	run_ssh_cmd  ln -s $target $tag_name

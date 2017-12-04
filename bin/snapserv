@@ -341,9 +341,9 @@ snap_cmd() {
 		[[ $target == */s[1-9]* && $target != */*/* &&
 		   $tag_name != */* ]] || error "ln -s CC/s## tag-name"
 		project=$(dirname $target) rev=$(basename $target)
-		[[ -d $project ]] || error "project $project doesn't exist"
-		cd    $project    || error "project $project is inaccessible"
-		[[ -d $rev ]] || error "snapshot $rev doesn't exist"
+		[[ -d $project ]] || error "project '$project' doesn't exist"
+		cd    $project    || error "project '$project' is inaccessible"
+		[[ -d $rev ]] || error "snapshot '$rev' doesn't exist"
 		[[ ! -e  $tag_name ]] ||
 		   error "tag-name exists: $(ls $ls_opts -ld $tag_name |
 						iso_ll_field_selector)"
