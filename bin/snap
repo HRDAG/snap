@@ -166,7 +166,7 @@ is_workspace_modified() {
 
 # ----------------------------------------------------------------------------
 
-ssh_cmd() {
+server_snap() {
 
 	[[ -o xtrace ]] && local xtrace= || local xtrace="set +x"
 	$Trace
@@ -179,18 +179,18 @@ ssh_cmd() {
 # ---------------------------------
 
 # the 'q' is for quiet, this command silently ignores errors
-ssh_cmd_q() {
+server_snap_q() {
 
-	ssh_cmd "$@" 2>/dev/null
+	server_snap "$@" 2>/dev/null
 }
 
 # ----------------------------------------------------------------------------
 
 # -------------------------------------------------------
 
-run_ssh_cmd() {
+run_server_snap() {
 
-	ssh_cmd "$@" || error "ssh_cmd $* => $?"
+	server_snap "$@" || error "server_snap $* => $?"
 }
 
 # -------------------------------------------------------
@@ -294,8 +294,8 @@ snap_pull() {
 	_project=${_project%/*}
 
 	local ls_err=$tmp_1
-	if     ssh_cmd ls -d $snapshot >  /dev/null 2> $ls_err ; then true ;
-	elif ! ssh_cmd ls -d $_project >& /dev/null
+	if     server_snap ls -d $snapshot >  /dev/null 2> $ls_err ; then true;
+	elif ! server_snap ls -d $_project >& /dev/null
 	   then error "project '$_project' doesn't exist"
 	elif grep -q ': Permission denied$' $ls_err
 	   then error "you don't have access to $_project, ask server operator for permission"
@@ -436,7 +436,7 @@ update_log() {
 is_head() {
 
 	local err=$tmp_5
-	head_rev=$(ssh_cmd cat $project/HEAD/.snap/revision 2>$err) # global
+	head_rev=$(server_snap cat $project/HEAD/.snap/revision 2>$err) #global
 	egrep --quiet ': Permission denied$' $err &&
 	   error "you don't have access to $project, ask server operator for permission"
 	egrep -v ': No such file or directory$' $err # OK if cat fails
@@ -474,7 +474,7 @@ snap_push() {
 	[[ $project ]] || error "can only 'push' when inside a project"
 
 	# is_workspace_modified runs write_metadata, writes .snap/files-local
-	if ! is_workspace_modified && [[ $(ssh_cmd_q ls $project/HEAD) ]]
+	if ! is_workspace_modified && [[ $(server_snap_q ls $project/HEAD) ]]
 	   then echo "No local changes, no 'push' needed."
 		return 1
 	fi
@@ -593,7 +593,7 @@ snap_tag() {
 
 	abort_if_bad_tag_name $tag_name
 
-	run_ssh_cmd  ln -s $target $tag_name
+	run_server_snap  ln -s $target $tag_name
 	echo "$tag_name -> $target"
 }
 
@@ -615,7 +615,7 @@ _snap_ls() {
 	[[ $# == 1 || $project ]] || error "not in workspace, specify project"
 	local _project=${1:-$project}
 
-	run_ssh_cmd ls $_ls_opts "$_project/*" |
+	run_server_snap ls $_ls_opts "$_project/*" |
 	  egrep $egrep_opts ' [A-Z]{2}[^/ ]*/s[1-9][0-9]*$'
 }
 
@@ -657,7 +657,7 @@ snap_du() {
 	[[ -o xtrace ]] && local xtrace= || local xtrace="set +x"
 	$Trace
 	# empty Linux directories are 4 KB; GNU ls displays as 4.0K when -h
-	ssh_cmd_q du -h -s $du_opts "${_project:-*}" | egrep -v '^4.0K'
+	server_snap_q du -h -s $du_opts "${_project:-*}" | egrep -v '^4.0K'
 	$xtrace
 }
 
@@ -689,6 +689,6 @@ case $action in
    ( du   ) snap_du   "$@" ;;
    ( df | ls | cat | head | tail | rm )
 	[[ $action == ls && $# == 0 ]] && set -- -CF
-	run_ssh_cmd $action "$@" ;;
+	run_server_snap $action "$@" ;;
    ( * ) error "action '$action' is not supported" ;;
 esac
