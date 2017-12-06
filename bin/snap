@@ -417,6 +417,7 @@ set_comment() {
 	fi
 	# each log record is a single line
 	comment=$(echo -n "$comment" | tr '\n' ' ')
+	[[ $comment ]]
 }
 
 # --------------------------------------------
@@ -466,7 +467,7 @@ file_contains_restartable_rsync_error() {
 
 snap_push() {
 	set_comment "$@" && shift 2
-	[[ $# == [01] ]] || error "[-m msg|-F msg-file] [tag]"
+	[[ $# == [01] && ${1-} != -* ]] || print_or_egrep_Usage_then_exit push
 	local tag=${1-}
 
 	abort_if_bad_tag_name $tag
