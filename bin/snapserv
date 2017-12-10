@@ -87,12 +87,10 @@ if [[ $1 == -c ]]
 	exit
 fi
 
-[[ ${SSH_ORIGINAL_COMMAND-} ]] || SSH_ORIGINAL_COMMAND="{local} $*"
-
-# echo "$@" | write scott pts/0; exit 1
+# [[ $LOGNAME == scott ]] && set -x
+[[    ${SSH_ORIGINAL_COMMAND-} ]] || SSH_ORIGINAL_COMMAND="{local} $*"
 log "+ $SSH_ORIGINAL_COMMAND"
-
-case $SSH_ORIGINAL_COMMAND in
+case   $SSH_ORIGINAL_COMMAND in
   ( "{local} fix"*   )	is_rsync=$false ;;
   ( "{local} write"* )	is_rsync=$false ;;
   ( *[^-=._a-zA-Z0-9/\ *]* ) # optional, for globbing: {,} [^\]
@@ -102,8 +100,9 @@ case $SSH_ORIGINAL_COMMAND in
   # the next two patterns are duplicated in repo-serv
   ( 'snap '*		) is_rsync=$false ;;
   ( 'rsync --server '*	) is_rsync=$true  ;;
-  ( * ) error "this can only be called by 'vcs-serve' on behalf of 'snap'" ;;
+  ( * ) error "this can only be called by 'repo-serve' on behalf of 'snap'" ;;
 esac
+set +x
 
 cd_ $snapserv_root
 
