@@ -293,17 +293,17 @@ snap_pull() {
 	fi
 	_project=${_project%/*}
 
-	local ls_err=$tmp_1 ls2_err=$tmp_2
-	if     server_snap ls -d $snapshot > /dev/null 2> $ls_err ; then true;
-	elif ! server_snap ls -d $_project > /dev/null 2> $ls2_err
-	   then if grep -q '^ls: cannot access ' $ls2_err
+	local ls_rev=$tmp_1 ls_proj=$tmp_2
+	if     server_snap ls -d $snapshot > /dev/null 2> $ls_rev ; then true;
+	elif ! server_snap ls -d $_project > /dev/null 2> $ls_proj
+	   then if grep -q '^ls: cannot access ' $ls_proj
 		   then error "project '$_project' doesn't exist"
-		   else cat $ls2_err
+		   else cat $ls_proj
 			exit 1
 		fi
-	elif grep -q ': Permission denied$' $ls_err
+	elif grep -q ': Permission denied$' $ls_rev
 	   then error "you don't have access to $_project, ask server operator for permission"
-	elif grep -q ': No such file or directory$' $ls_err
+	elif grep -q ': No such file or directory$' $ls_rev
 	   then if [[ $snapshot == */HEAD ]]
 		   then error "$_project is empty, someone must 'push'"
 		elif [[ $snapshot == */s[0-9]* ]]
