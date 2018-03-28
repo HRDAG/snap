@@ -185,6 +185,7 @@ rsync_cmd() {
 	readonly lock=$PWD/.lock
 	lockpid $lock || 
 	   error "can't get lock: $(ls $ls_opts -l $lock)"
+	chmod g+w $lock
 
 	# recover from a failed "atomic" operation (see end of this function)
 	[[ ! -s HEAD && -s HEAD.old ]] && run_cmd mv HEAD.old HEAD
@@ -287,6 +288,7 @@ fix_push_log() {
 	project=$(basename $project)
 	local lock=.lock
 	$Run lockpid $lock || error "restart at $project"
+	$Run chmod g+w $lock
 	local head_snapshot=$(readlink HEAD)
 	set_next_snapshot  $head_snapshot
 	local new_snapshot=$next_snapshot
