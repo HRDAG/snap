@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <errno.h>		/* <asm-generic/errno-base.h> on Linux */
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -201,12 +201,13 @@ exit_if_file_holds_active_pid(const int fd)
     if (sscanf(line, "%d", &lock_pid) != 1)
 	return;
 
-    // can't use 'kill' if non-root user
     if (kill(lock_pid, 0) < 0) {
 	if (errno == ESRCH)
 	    return;
 
-	show_errno_and_exit("kill");
+	// if EPERM, process exists (but isn't owned by us) so fall through
+	if (errno != EPERM)
+	    show_errno_and_exit("kill");
     }
 
     if (getppid() == lock_pid) {
