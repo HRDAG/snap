@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.4.5		     # alert user if internal 'ssh' generates an error
+Version=0.4.6		     # alert user if internal 'ssh' generates an error
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
@@ -33,6 +33,7 @@ Version_required=0.4.2	     # be stricter with allowed tag names
 Version_required=0.4.3	     # update copyright dates
 Version_required=0.4.4	     # explain why a bad tag name is illegal
 Version_required=0.4.5	     # alert user if internal 'ssh' generates an error
+Version_required=0.4.6	     # must sort files-* files *after* append metadata
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
@@ -273,7 +274,7 @@ write_metadata() {
 	     ! -path "$rsync_output*"   ! -name .DS_Store \
 	     ! -name '.~lock.*#' \
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
-	  fgrep $fgrep_opts | sort | compute_metadata > $metadata_file ||
+	  fgrep $fgrep_opts | compute_metadata | sort > $metadata_file ||
 	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"
 	[[ ${PIPESTATUS[0]} == 0 ]] || error "must first fix the above error"
 
