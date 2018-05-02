@@ -268,7 +268,7 @@ write_metadata() {
 	    do	fgrep_opts="$fgrep_opts -e /$dir/"
 	done
 	set -- *
-	[[ $* != "*" ]] || error "workspace is empty"
+	[[ $* != "*" ]] || error "$PWD workspace is empty"
 	# the -path arg & -name patterns are duplicated in rsync_client_opts
 	find * \( -type f -o -type l \) \
 	     ! -path "$rsync_output*"   ! -name .DS_Store \
@@ -284,6 +284,7 @@ write_metadata() {
 		$sha_cmd $metadata_file > $metadata_file.sha1
 		cd_ ..
 	fi
+	true
 }
 
 # -------------------------------------------------------

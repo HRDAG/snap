@@ -369,6 +369,21 @@ snap_cmd() {
 			[[ -d $project/HEAD ]] || continue
 			fix_push_log $project			
 		done ;;
+	   ( write*all*metadata )      # only for a repo hacker to run locally
+		cd_ ~snap
+		local repo_dir=$PWD
+#		for dir in {S[F-Z],[T-Z]}*/s*[0-9]/.snap
+		for dir in */s*[0-9]/.snap
+		    do	cd $repo_dir/$(dirname $dir) || continue
+			set -- *
+			[[ $* != "*" ]] || warn "$PWD is empty" || continue
+			if [[ $Run ]]
+			   then pwd
+			   else write_metadata # only writes repo version
+				echo -n .
+			fi
+		done
+		echo ;;
 	   ( write*metadata )	       # only for a repo hacker to run locally
 		cd_ $original_dir
 		[[ $PWD == */.snap ]] && cd_ ..
