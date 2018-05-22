@@ -554,8 +554,14 @@ snap_push() {
 
 	snap_pull -i 2>&1 |		# grab the new snapshot's .snap/* files
 	   egrep -v '^\.snap/| |^$'	# but don't show .snap/* (or -v msgs)
-	local status=${PIPESTATUS[0]}	# rsync's exit status
-	[[ $status == 0 ]] || error "couldn't pull snap's metadata: .snap/*"
+	local  status=${PIPESTATUS[0]}	# snapserv's or rsync's exit status
+	if [[ $status != 0 ]]
+	   then echo; echo
+		if snap_pull -i 2>&1 | grep "^snap push: "
+		   then exit ${PIPESTATUS[0]}
+		   else error "couldn't pull snap's metadata: .snap/*"
+		fi
+	fi
 
 	local new_rev=$(< .snap/revision)
 	warn "successfully pushed $new_rev"
