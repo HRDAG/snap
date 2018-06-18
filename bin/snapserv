@@ -234,7 +234,8 @@ rsync_cmd() {
 	rm -f .snap/revision && echo "$project/$new_head" > .snap/revision ||
 	   error "snap repo full, or out of inodes??"
 	if [[ -s .snap/paths-to-delete ]]
-	   then run_cmd xargs rm -f < .snap/paths-to-delete
+	   then tr '\n' '\0' < .snap/paths-to-delete | xargs --null rm -f ||
+		   error "failed to propagate deletes"
 		run_cmd rm .snap/paths-to-delete
 		# delete empty directories
 		find * -depth -type d -print0 |
