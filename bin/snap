@@ -104,6 +104,7 @@ cd___source_config___set_project__local_rev__rsync_opts__snap_host() {
 
 	source_config /etc/snap.sh
 	source_config ~/.snap.sh
+	[[ ${administrator-] || administrator=$maintainer
 
 	local cwd=$PWD
 	cd_ $(/bin/pwd)			# avoid symlink weirdness
@@ -547,7 +548,7 @@ snap_push() {
 	if [[ $found_non_symlink_error ]]
 	   then grep "failure_summary_RE" $rsync_output
 		[[ $status == 0 ]] ||
-		   error "Permission problem on server, contact $maintainer"
+		   error "Permission problem on server, contact $administrator"
 	fi
 
 	run_cmd cp .snap/files-local .snap/files-pre-push

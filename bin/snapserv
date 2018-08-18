@@ -132,7 +132,7 @@ run \"git pull\" in your 'snap' workspace (HRDAG/snap.git checkout)."
 	[[ ${HRDAG_SNAP_VERSION-} ]] ||
 	warn "If you still get this error after updating your 'snap' command,
 you probably forgot to run \"ssh -O exit $default_snap_host\"; otherwise,
-email the file ~/.ssh/config to $maintainer,
+email your file ~/.ssh/config to $administrator,
 so he can debug your problem."
 
 	[[ $sleep_time ]] || exit 1
