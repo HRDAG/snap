@@ -104,7 +104,7 @@ cd___source_config___set_project__local_rev__rsync_opts__snap_host() {
 
 	source_config /etc/snap.sh
 	source_config ~/.snap.sh
-	[[ ${administrator-] || administrator=$maintainer
+	[[ ${administrator-} ]] || administrator=$maintainer
 
 	local cwd=$PWD
 	cd_ $(/bin/pwd)			# avoid symlink weirdness
@@ -490,6 +490,9 @@ snap_push() {
 	set_snappable_dirs || error "no directories to push"
 	# we use group perms for authorization: make files group-accessible
 	run_cmd chmod -R ug+rwX $snappable_dirs
+
+	server_snap_q touch $project 2> /dev/null ||
+	   error "you need write access to $project, contact: $administrator"
 
 	local paths_to_delete=.snap/paths-to-delete # snapserv uses this file
 	sort_files_in_place .snap/files-*

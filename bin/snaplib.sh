@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.4.7		     # alert user if internal 'ssh' generates an error
+Version=0.4.8		     # ensure user has write perms before attempt push
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
@@ -35,6 +35,7 @@ Version_required=0.4.4	     # explain why a bad tag name is illegal
 Version_required=0.4.5	     # alert user if internal 'ssh' generates an error
 Version_required=0.4.6	     # must sort files-* files *after* append metadata
 Version_required=0.4.7	     # if snapserv error msg, show it (not rsync msg)
+Version_required=0.4.8	     # ensure user has write perms before attempt push
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
@@ -264,9 +265,9 @@ write_metadata() {
 	run_cmd mkdir -p .snap	  # might be fixing a half-initialized project
 
 	[[ ${Run-} ]] && metadata_file=/dev/tty
-	local dir fgrep_opts=
+	local dir grep_opts=
 	for dir in $snappable_subdirs
-	    do	fgrep_opts="$fgrep_opts -e /$dir/"
+	    do	grep_opts="$grep_opts -e \\b$dir/"
 	done
 	set -- *
 	[[ $* != "*" ]] || error "$PWD workspace is empty"
@@ -275,7 +276,7 @@ write_metadata() {
 	     ! -path "$rsync_output*"   ! -name .DS_Store \
 	     ! -name '.~lock.*#' \
 	     ! -name '*~' ! -name '#*#' ! -name '.#*' | # ignore emacs temps
-	  fgrep $fgrep_opts | compute_metadata | sort > $metadata_file ||
+	  grep $grep_opts | compute_metadata | sort > $metadata_file ||
 	     error "$FUNCNAME -> $?: $snapserv_root/ out of disk space??"
 	[[ ${PIPESTATUS[0]} == 0 ]] || error "must first fix the above error"
 

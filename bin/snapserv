@@ -356,7 +356,7 @@ snap_cmd() {
 		[[ $action != rm || ${!#} == */?* ]] ||
 		   error "can't delete whole projects"
 		run_cmd $action "$@" ;;
-	   ( du | ls | cat | head | tail )
+	   ( du | ls | cat | head | tail | touch )
 		[[ $action == ls ]] && set -- $ls_opts "$@"
 		$action "$@" ;;
 	   ( fix )			# only for a repo hacker to run locally
