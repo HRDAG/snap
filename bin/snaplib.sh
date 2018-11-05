@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.4.9		     # improve filter for snappable files
+Version=0.4.10		     # global snap config files moved into /etc/snap/
 Version_required=0.2.18	     # 'snap log' records had old revision not new one
 Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
 Version_required=0.2.20	     # sort .snap/files-* just before we use them
@@ -37,6 +37,7 @@ Version_required=0.4.6	     # must sort files-* files *after* append metadata
 Version_required=0.4.7	     # if snapserv error msg, show it (not rsync msg)
 Version_required=0.4.8	     # ensure user has write perms before attempt push
 Version_required=0.4.9	     # improve filter for snappable files
+Version_required=0.4.10	     # global snap config files moved into /etc/snap/
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 

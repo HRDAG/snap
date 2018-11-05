@@ -58,7 +58,7 @@ unset arg
 readonly original_dir=$PWD
 
 # can set: snapserv_root rm_authorized_users max_snapshots_to_check
-our_config=/etc/$our_name.sh
+our_config=/etc/snap/$our_name.sh
 source_config $our_config
 readonly   snapserv_root rm_authorized_users max_snapshots_to_check
 [[ $snapserv_root ]] || error "need to set snapserv_root in $our_config"

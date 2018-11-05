@@ -20,8 +20,8 @@
 
 source snaplib.sh || exit 1
 
-# snap_host can also be set in .snap/config.sh, ~/.snap.sh, /etc/snap.sh
-if [[ -s /etc/snapserv.sh ]]
+# snap_host can also be set in .snap/config.sh, ~/.snap.sh, /etc/snap/snap.sh
+if [[ -s /etc/snap/snapserv.sh ]]
    then snap_host=localhost
    else snap_host=$default_snap_host
 fi
@@ -102,7 +102,7 @@ set_rsync_opts__snap_host() {
 
 cd___source_config___set_project__local_rev__rsync_opts__snap_host() {
 
-	source_config /etc/snap.sh
+	source_config /etc/snap/snap.sh
 	source_config ~/.snap.sh
 	[[ ${administrator-} ]] || administrator=$maintainer
 
