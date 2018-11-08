@@ -631,7 +631,8 @@ _snap_ls() {
 	local _project=${1:-$project}
 
 	run_server_snap ls $_ls_opts "$_project/*" |
-	  egrep $egrep_opts ' [A-Z]{2}[^/ ]*/s[1-9][0-9]*$'
+	  # remove prefix pattern:  [A-Z]{2}[^/ ]*
+	  egrep $egrep_opts '/s[1-9][0-9]*$'
 }
 
 # ------------------------------------
