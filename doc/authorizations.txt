@@ -1,0 +1,19 @@
+eleanor:~-4467# cd ~snap
+eleanor:/var/repos/snap-4468# ls -ld . [!GH]*
+drwxr-s---  96 svn       svn               4096 Aug 18 17:08 ./
+drwxrws---   2 jeffk     AF                4096 Jan 26  2013 AF/
+drwxrws---   2 pball     AHG               4096 Jan 26  2013 AHG/
+drwxrws---   2 anitag    ARG               4096 Jan 30  2013 ARG/
+drwxrws---   2 pball     BA                4096 Jan 26  2013 BA/
+drwxrws---   2 romesh    BD                4096 Jan 26  2013 BD/
+drwxrws---   2 pball     BR                4096 Feb 19  2013 BR/
+drwxrwsr-x   2 romesh    BU                4096 Jan 26  2013 BU/
+drwxrws--- 308 tamy      CO                4096 Apr 28  2018 CO/
+drwxrwsr-x 106 pball     EX                4096 Aug 18 17:25 EX/
+drwxrws---   2 pball     IN-ensaaf         4096 Jan 26  2013 IN/
+drwxrws---   2 romesh    IN-ensaaf         4096 Jan 26  2013 IN-ensaaf/
+drwxrwsr-x   6 pball     IQ                4096 Aug  7  2016 IQ/
+drwxrwsr-x   2 pball     IR                4096 Jan 26  2013 IR/
+drwxrwsr-x   2 jule      Ju                4096 Jan 30  2013 Ju/
+drwxrws--- 257 pball     KO                4096 Feb 16  2018 KO/
+...
