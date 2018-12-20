@@ -278,6 +278,12 @@ deleted_paths() {
 
 # ---------------------------------
 
+permission_denied_error() {
+	error "you don't have access to $1, ask $administrator for permission"
+}
+
+# ---------------------------------
+
 snap_pull() {
 	if [[ ${1-} == -i ]]
 	   then shift
@@ -303,7 +309,7 @@ snap_pull() {
 			exit 1
 		fi
 	elif grep -q ': Permission denied$' $ls_rev
-	   then error "you don't have access to $_project, contact: $administrator"
+	   then permission_denied_error $_project
 	elif grep -q ': No such file or directory$' $ls_rev
 	   then if [[ $snapshot == */HEAD ]]
 		   then error "$_project is empty, someone must 'push'"
@@ -444,7 +450,7 @@ is_head() {
 	local err=$tmp_5
 	head_rev=$(server_snap cat $project/HEAD/.snap/revision 2>$err) #global
 	egrep --quiet ': Permission denied$' $err &&
-	   error "you don't have access to $project, ask server operator for permission"
+	   permission_denied_error $project
 	egrep -v ': No such file or directory$' $err # OK if cat fails
 	egrep --quiet snapserv: $err && exit 1	     # snapserv error?
 	[[ ! $head_rev && $local_rev ]] && error "missing $project/HEAD ?"
