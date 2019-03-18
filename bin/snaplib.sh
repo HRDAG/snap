@@ -20,25 +20,26 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.4.11		     # global snap config files moved into /etc/snap/
-Version_required=0.2.18	     # 'snap log' records had old revision not new one
-Version_required=0.2.19	     # when 'snap push', don't show 0B transfers
-Version_required=0.2.20	     # sort .snap/files-* just before we use them
-Version_required=0.2.21	     # can't hard-link snapshot not owned by us
-Version_required=0.2.22	     # show "workspace out-of-date" warning at end
-Version_required=0.3.1	     # 'snap push' now requires a commit message
-Version_required=0.3.2	     # correctly handle directory names with spaces
-Version_required=0.4.1	     # catch many errors, abort with user-friendly msg
-Version_required=0.4.2	     # be stricter with allowed tag names
-Version_required=0.4.3	     # update copyright dates
-Version_required=0.4.4	     # explain why a bad tag name is illegal
-Version_required=0.4.5	     # alert user if internal 'ssh' generates an error
-Version_required=0.4.6	     # must sort files-* files *after* append metadata
-Version_required=0.4.7	     # if snapserv error msg, show it (not rsync msg)
-Version_required=0.4.8	     # ensure user has write perms before attempt push
-Version_required=0.4.9	     # improve filter for snappable files
-Version_required=0.4.10	     # global snap config files moved into /etc/snap/
-Version_required=0.4.11	     # standardize access-denied error message
+Version=0.4.12		# save "useless" test output to aid in debugging
+Version_required=0.2.18	# 'snap log' records had old revision not new one
+Version_required=0.2.19	# when 'snap push', don't show 0B transfers
+Version_required=0.2.20	# sort .snap/files-* just before we use them
+Version_required=0.2.21	# can't hard-link snapshot not owned by us
+Version_required=0.2.22	# show "workspace out-of-date" warning at end
+Version_required=0.3.1	# 'snap push' now requires a commit message
+Version_required=0.3.2	# correctly handle directory names with spaces
+Version_required=0.4.1	# catch many errors, abort with user-friendly msg
+Version_required=0.4.2	# be stricter with allowed tag names
+Version_required=0.4.3	# update copyright dates
+Version_required=0.4.4	# explain why a bad tag name is illegal
+Version_required=0.4.5	# alert user if internal 'ssh' generates an error
+Version_required=0.4.6	# must sort files-* files *after* append metadata
+Version_required=0.4.7	# if snapserv error msg, show it (not rsync msg)
+Version_required=0.4.8	# ensure user has write perms before attempt push
+Version_required=0.4.9	# improve filter for snappable files
+Version_required=0.4.10	# global snap config files moved into /etc/snap/
+Version_required=0.4.11	# standardize access-denied error message
+Version_required=0.4.12	# save "useless" test output to aid in debugging
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 

@@ -179,10 +179,12 @@ server_snap() {
 
 # ---------------------------------
 
+readonly ignored=.snap/ignored
+
 # the 'q' is for quiet, this command silently ignores errors
 server_snap_q() {
 
-	server_snap "$@" 2>/dev/null
+	server_snap "$@" 2>> $ignored
 }
 
 # ----------------------------------------------------------------------------
@@ -301,8 +303,8 @@ snap_pull() {
 	_project=${_project%/*}
 
 	local ls_rev=$tmp_1 ls_proj=$tmp_2
-	if     server_snap ls -d $snapshot > /dev/null 2> $ls_rev ; then true;
-	elif ! server_snap ls -d $_project > /dev/null 2> $ls_proj
+	if     server_snap ls -d $snapshot >> $ignored 2> $ls_rev ; then true;
+	elif ! server_snap ls -d $_project >> $ignored 2> $ls_proj
 	   then if grep -q '^ls: cannot access ' $ls_proj
 		   then error "project '$_project' doesn't exist"
 		   else cat $ls_proj
@@ -497,7 +499,7 @@ snap_push() {
 	# we use group perms for authorization: make files group-accessible
 	run_cmd chmod -R ug+rwX $snappable_dirs
 
-	server_snap_q touch $project 2> /dev/null ||
+	server_snap_q touch $project ||
 	   error "you need write access to $project, contact: $administrator"
 
 	local paths_to_delete=.snap/paths-to-delete # snapserv uses this file
@@ -520,6 +522,7 @@ snap_push() {
 	while true
 	   do	# pipeline runs rsync in separate process: ok if exits on error
 		run_rsync_cmd --delete --relative \
+			      --exclude=$ignored  \
 			      --exclude=.snap/revision \
 			      --exclude=.snap/files-repo* \
 				  $paths_to_delete $snappable_dirs \
