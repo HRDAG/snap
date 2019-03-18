@@ -68,6 +68,7 @@ readonly rsync_client_opts="--verbose --partial
 #    -O is not used when --sender
 readonly rsync_server_opts="-vlOHtrSe.is --partial"
 
+# these subdirs are duplicated in /etc/snapback/exclude.txt
 readonly snappable_subdirs="input output frozen"
 
 readonly true=t false=

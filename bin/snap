@@ -45,7 +45,7 @@ Usage: $our_name [options] action [args]
 	-v: run rsync in verbose mode (can use multiple times)
 	-V: show current version
 
-	-d: Debug shell script (don't run commands, just show them)
+	-d: Debug shell script (don't run commands, just show them): simulation
 	-t: Trace shell script (show commands as they execute), -tt for verbose
 "
 
