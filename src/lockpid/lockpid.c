@@ -195,8 +195,11 @@ exit_if_file_holds_active_pid(const int fd)
     char line[16];
     pid_t lock_pid;
 
-    if (read(fd, line, sizeof(line)) < 0)
+    int n = read(fd, line, sizeof(line));
+    if (n < 0)
 	show_errno_and_exit("read");
+    if (n == 0)
+	return;
 
     if (sscanf(line, "%d", &lock_pid) != 1)
 	return;
