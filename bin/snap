@@ -73,7 +73,8 @@ readonly _snap_host rsync_verbose_opt
 
 export HRDAG_SNAP_VERSION=$Version
 
-[[ -n $trace && -n $Run ]] && Run=:
+export PS4="+ \$LINENO> "		# show linenumber when trace
+[[ $trace && $Run ]] && Run=:
 
 # ----------------------------------------------------------------------------
 # support functions
