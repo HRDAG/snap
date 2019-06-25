@@ -73,7 +73,11 @@ readonly _snap_host rsync_verbose_opt
 
 export HRDAG_SNAP_VERSION=$Version
 
-export PS4="+ \$LINENO> "		# show linenumber when trace
+set -o functrace
+shopt -s extdebug
+# show line number and function name with each command echoed by "set -x"
+[[ $PS4 == "+ " ]] && export PS4='+ line ${LINENO-}, in ${FUNCNAME-}(): '
+
 [[ $trace && $Run ]] && Run=:
 
 # ----------------------------------------------------------------------------

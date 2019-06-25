@@ -1,7 +1,8 @@
 # ignore tmp files
 \~*
 *~
+#*
 .#*
-input/
-output/
-frozen/
+
+# Scott's junk
+etc/todo.txt
