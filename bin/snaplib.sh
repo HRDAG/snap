@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with snap.  If not, see <http://www.gnu.org/licenses/>.
 
-Version=0.4.12		# save "useless" test output to aid in debugging
+Version=0.4.13		# improve PS4: show context when running 'set -x'
 Version_required=0.2.18	# 'snap log' records had old revision not new one
 Version_required=0.2.19	# when 'snap push', don't show 0B transfers
 Version_required=0.2.20	# sort .snap/files-* just before we use them
@@ -40,6 +40,7 @@ Version_required=0.4.9	# improve filter for snappable files
 Version_required=0.4.10	# global snap config files moved into /etc/snap/
 Version_required=0.4.11	# standardize access-denied error message
 Version_required=0.4.12	# save "useless" test output to aid in debugging
+Version_required=0.4.13	# improve PS4: show context when running 'set -x'
 
 maintainer="Scott Weikart <sweikart@gmail.com>" # can over-ride in config file
 
