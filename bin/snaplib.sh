@@ -58,8 +58,6 @@ Run=					# caller can set (e.g. with getopts d)
 # constants
 # ----------------------------------------------------------------------------
 
-set -o functrace
-shopt -s extdebug
 # if command in /home/, precede by ~ (yourself) else ~other-user
 PS4='+ $(echo $BASH_SOURCE | sed "s@^$HOME/@~/@; s@^/home/@~@; s@/.*/@ @")'
 PS4+=' line ${LINENO-}, in ${FUNCNAME-}(): '
