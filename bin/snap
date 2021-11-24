@@ -171,7 +171,7 @@ server_snap() {
 
 	[[ -o xtrace ]] && local xtrace= || local xtrace="set +x"
 	$Trace
-	$Run ssh $snap_host snap "$@"
+	ssh $snap_host snap "$@"
 	local status=${PIPESTATUS[0]}
 	$xtrace
 	return $status
