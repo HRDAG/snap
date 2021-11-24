@@ -302,6 +302,7 @@ snap_pull() {
 	fi
 	_project=${_project%/*}
 
+	run_cmd mkdir -p .snap		# needed for new project
 	local ls_rev=$tmp_1 ls_proj=$tmp_2
 	if     server_snap ls -d $snapshot >> $ignored 2> $ls_rev ; then true;
 	elif ! server_snap ls -d $_project >> $ignored 2> $ls_proj
