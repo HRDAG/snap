@@ -498,7 +498,7 @@ snap_push() {
 
 	set_snappable_dirs || error "no directories to push"
 	# we use group perms for authorization: make files group-accessible
-	run_cmd chmod -R ug+rwX $snappable_dirs
+	run_cmd -w chmod -R ug+rwX $snappable_dirs
 
 	server_snap_q touch $project ||
 	   error "you need write access to $project, contact: $administrator"

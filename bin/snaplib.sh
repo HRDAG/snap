@@ -109,11 +109,20 @@ readonly is_snapserv=${who_am_i-}
 
 have_cmd() { type -t "$@" &> /dev/null; }
 run_cmd() {
+	[[ $1 == -w ]] && { shift; local is_warn=$true; } || local is_warn=
 	$Run "$@" && return 0
 	local status=$?
 	[[ $is_snapserv ]] &&
 	log "  $* => $status"		# log defined in 'snapserv' command
-	error "$* => $status"
+	if [[ $is_warn ]]
+	   then while [[ $1 != */* ]]
+		    do	echo -n "$1 "
+			shift
+		done
+		[[ $# != 0 ]] && echo -n "$1 ... "
+		echo    " => $status (probably not a problem)"
+	   else	error "$* => $status"
+	fi >&2
 }
 
 warn () {
