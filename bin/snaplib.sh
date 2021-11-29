@@ -119,8 +119,9 @@ run_cmd() {
 		    do	echo -n "$1 "
 			shift
 		done
-		[[ $# != 0 ]] && echo -n "$1 ... "
-		echo    " => $status (probably not a problem)"
+		[[ $# != 0 ]] && { echo -n "$1 "; shift; }
+		[[ $# != 0 ]] &&   echo -n "... "
+		echo   "=> $status (probably not a problem)"
 	   else	error "$* => $status"
 	fi >&2
 }
