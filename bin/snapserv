@@ -92,6 +92,7 @@ fi
 log "+ $SSH_ORIGINAL_COMMAND"
 case   $SSH_ORIGINAL_COMMAND in
   ( "{local} fix"*   )	is_rsync=$false ;;
+  ( "{local} sort"* )	is_rsync=$false ;;
   ( "{local} write"* )	is_rsync=$false ;;
   ( *[^-=._a-zA-Z0-9/\ *]* ) # optional, for globbing: {,} [^\]
 		error    "illegal character(s): $SSH_ORIGINAL_COMMAND" ;;
@@ -370,6 +371,16 @@ snap_cmd() {
 			[[ -d $project/HEAD ]] || continue
 			fix_push_log $project			
 		done ;;
+	   ( sort*all*metadata )       # only for a repo hacker to run locally
+		cd_ ~snap
+		local repo_dir=$PWD
+		for dir in */s*[0-9]/.snap
+		    do	cd $dir || continue
+			sha1sum --quiet --check files-repo.sha1 && continue
+			[[ $Run ]] && continue
+			
+		done
+		echo ;;
 	   ( write*all*metadata )      # only for a repo hacker to run locally
 		cd_ ~snap
 		local repo_dir=$PWD
