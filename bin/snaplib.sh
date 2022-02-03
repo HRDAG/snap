@@ -274,9 +274,9 @@ compute_metadata() {
 
 # -------------------------------------------------------
 
-if have_cmd shasum
-   then readonly sha_cmd=shasum
-   else readonly sha_cmd=sha1sum
+if have_cmd sha1sum
+   then readonly sha_cmd=sha1sum
+   else readonly sha_cmd=shasum
 fi
 
 write_metadata() {
