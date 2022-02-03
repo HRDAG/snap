@@ -22,7 +22,8 @@ source snaplib.sh || exit 1
 
 # snap_host can also be set in .snap/config.sh, ~/.snap.sh, /etc/snap/snap.sh
 if [[ -s /etc/snap/snapserv.sh ]]
-   then snap_host=localhost
+   then user=${LOGNAME:-$USER}
+	snap_host=${user%-r}@localhost
    else snap_host=$default_snap_host
 fi
 
