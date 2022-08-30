@@ -74,6 +74,7 @@ The first time you run snap in a project tree, it will append the following line
 	input/
 	output/
 	frozen/
+	note/
 
 to make sure that the directories saved in the snap repository aren't also saved in git.
 
