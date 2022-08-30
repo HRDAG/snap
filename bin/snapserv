@@ -373,12 +373,23 @@ snap_cmd() {
 		done ;;
 	   ( sort*all*metadata )       # only for a repo hacker to run locally
 		cd_ ~snap
-		local repo_dir=$PWD
+		local repo_dir=$PWD file=files-repo
 		for dir in */s*[0-9]/.snap
-		    do	cd $dir || continue
-			sha1sum --quiet --check files-repo.sha1 && continue
-			[[ $Run ]] && continue
-			
+		    do	cd $repo_dir/$dir || continue
+			[[ -f $file ]] || continue
+			$sha_cmd --quiet --check $file.sha1 ||
+			    error "should probably run write-metadata in $PWD"
+			sort --check=silent $file && continue
+			$Run sort -o $file $file &&
+			if [[ $Run ]]
+			   then echo "$sha_cmd $file > $file.sha1"
+			   else       $sha_cmd $file > $file.sha1
+			fi && local status=succeeded || local status=failed
+			local msg="re-sorted $PWD/$file: $status"
+			if [[ $status == succeeded ]]
+			   then echo "$msg"
+			   else warn "$msg"
+			fi
 		done
 		echo ;;
 	   ( write*all*metadata )      # only for a repo hacker to run locally
