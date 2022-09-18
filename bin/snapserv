@@ -371,7 +371,7 @@ snap_cmd() {
 			[[ -d $project/HEAD ]] || continue
 			fix_push_log $project			
 		done ;;
-	   ( sort*all*metadata )       # only for a repo hacker to run locally
+	   ( sort-all-metadata )       # only for a repo hacker to run locally
 		cd_ ~snap
 		local repo_dir=$PWD file=files-repo
 		for dir in */s*[0-9]/.snap
@@ -392,7 +392,7 @@ snap_cmd() {
 			fi
 		done
 		echo ;;
-	   ( write*all*metadata )      # only for a repo hacker to run locally
+	   ( write-all-metadata )      # only for a repo hacker to run locally
 		cd_ ~snap
 		local repo_dir=$PWD
 #		for dir in {S[F-Z],[T-Z]}*/s*[0-9]/.snap
@@ -407,7 +407,7 @@ snap_cmd() {
 			fi
 		done
 		echo ;;
-	   ( write*metadata )	       # only for a repo hacker to run locally
+	   ( write-metadata )	       # only for a repo hacker to run locally
 		cd_ $original_dir
 		[[ $PWD == */.snap ]] && cd_ ..
 		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z][^/]*/s[0-9]+$ ]] ||
