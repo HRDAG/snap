@@ -329,3 +329,16 @@ sort_files_in_place() {
 		[[ -e $file.sha1 && ! ${Run-} ]] && $sha_cmd $file > $file.sha1
 	done
 }
+
+# ----------------------------------------------------------------------------
+
+show_tagged_snapshots() {
+
+	for name in *
+	    do	[[ $name != '*' ]] || continue
+		[[ $name == s[0-9]* ]] && continue # actual snapshot?
+		[[ -L $name ]] || error "$PWD/$name is not a tag"
+		tagged_snapshot=$(readlink $name)
+		echo $PWD/$tagged_snapshot
+	done
+}

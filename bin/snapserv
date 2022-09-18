@@ -72,6 +72,7 @@ fi
 log() { [[ -w $log ]] && echo "$date $who_am_i: $*" >> $log; }
 
 [[ $1 == -d ]] && { Run=echo; shift; }
+# legacy code for moving metadata into .snap/
 if [[ $1 == -c ]]
    then shift
 	cd_ $snapserv_root
@@ -94,6 +95,7 @@ case   $SSH_ORIGINAL_COMMAND in
   ( "{local} fix"*   )	is_rsync=$false ;;
   ( "{local} sort"* )	is_rsync=$false ;;
   ( "{local} write"* )	is_rsync=$false ;;
+  ( "{local} show"* )	is_rsync=$false ;;
   ( *[^-=._a-zA-Z0-9/\ *]* ) # optional, for globbing: {,} [^\]
 		error    "illegal character(s): $SSH_ORIGINAL_COMMAND" ;;
   ( *..* )      error    "can't use .. in path: $SSH_ORIGINAL_COMMAND" ;;
@@ -413,6 +415,19 @@ snap_cmd() {
 		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z][^/]*/s[0-9]+$ ]] ||
 		   error "need to be in a snapshot"
 		write_metadata ;;	# repo versions, user won't over-write
+	   ( show-tagged-snapshots )
+		cd_ $original_dir
+		[[ $PWD == */.snap ]] && cd_ ..
+		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z] ]] ||
+		   error "need to be in a snapshot repo"
+		show_tagged_snapshots ;;
+	   ( show-all-tagged-snapshots )
+		cd_ ~snap
+		local repo_dir=$PWD
+		for dir in [A-Z][A-Z]*
+		    do	cd $repo_dir/$dir
+			show_tagged_snapshots
+		done ;;
 	esac
 }
 
