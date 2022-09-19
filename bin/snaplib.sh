@@ -338,6 +338,7 @@ show_tagged_snapshots() {
 	    do	[[ $name != '*' ]] || continue
 		[[ $name == s[0-9]* ]] && continue # actual snapshot?
 		[[ -L $name ]] || error "$PWD/$name is not a tag"
+		echo $PWD/$name
 		tagged_snapshot=$(readlink $name)
 		echo $PWD/$tagged_snapshot
 	done
