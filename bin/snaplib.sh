@@ -335,12 +335,12 @@ sort_files_in_place() {
 # this is like rm-untagged-snapshots in snapback
 show_tagged_snaps() {
 
-	for name in *
-	    do	[[ $name != '*' ]] || continue
-		[[ $name == s[0-9]* ]] && continue # actual snapshot?
-		[[ -L $name ]] || error "$PWD/$name is not a tag"
-		echo $PWD/$name
-		tagged_snapshot=$(readlink $name)
+	for snap in *
+	    do	[[ $snap != '*' ]] || continue
+		[[ $snap == s[0-9]* ]] && continue # actual snapshot?
+		[[ -L $snap ]] || error "$PWD/$snap is not a tag"
+		echo $PWD/$snap
+		tagged_snapshot=$(readlink $snap)
 		echo $PWD/$tagged_snapshot
 	done
 }
