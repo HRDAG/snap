@@ -332,7 +332,8 @@ sort_files_in_place() {
 
 # ----------------------------------------------------------------------------
 
-show_tagged_snapshots() {
+# this is like rm-untagged-snapshots in snapback
+show_tagged_snaps() {
 
 	for name in *
 	    do	[[ $name != '*' ]] || continue

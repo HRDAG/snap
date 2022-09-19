@@ -415,18 +415,18 @@ snap_cmd() {
 		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z][^/]*/s[0-9]+$ ]] ||
 		   error "need to be in a snapshot"
 		write_metadata ;;	# repo versions, user won't over-write
-	   ( show-tagged-snapshots )
+	   ( show-tagged-snaps )
 		cd_ $original_dir
 		[[ $PWD == */.snap ]] && cd_ ..
 		[[ $(/bin/pwd) =~ $snapserv_root/[A-Z][A-Z] ]] ||
 		   error "need to be in a snapshot repo"
-		show_tagged_snapshots ;;
-	   ( show-all-tagged-snapshots )
+		show_tagged_snaps ;;
+	   ( show-all-tagged-snaps )
 		cd_ ~snap
 		local repo_dir=$PWD
 		for dir in [A-Z][A-Z]*
 		    do	cd $repo_dir/$dir
-			show_tagged_snapshots
+			show_tagged_snaps
 		done ;;
 	esac
 }
